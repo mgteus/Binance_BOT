@@ -41,8 +41,4 @@ if __name__ == '__main__':
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
     x, y = get_secret_and_key(path_api)
     client = init_client(x, y)
-
-
-    df = get_minutedata('BTCBUSD', client)
-
-    print(df)
+    MACD_strat(ticker='', quant=0, client=client)
