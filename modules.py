@@ -1,4 +1,10 @@
+from operator import truth
 from binance import Client
+from binance.exceptions import BinanceAPIException
+import pandas as pd
+import time
+
+
 
 
 
@@ -17,8 +23,6 @@ def get_secret_and_key(path: str='') -> str and str:
         print(e)
         return '', ''
         
-
-
 def init_client(key: str = '', secret: str = '', balance: bool = False) -> bool:
     """
     Funcao que inicia o client da binance dado pela key e secret.
@@ -32,8 +36,34 @@ def init_client(key: str = '', secret: str = '', balance: bool = False) -> bool:
             if float(cur['free']) > 0:
                 print(cur['asset'], cur['free'])
 
-    return
+    return client
 
+
+def get_minutedata(ticker: str = '', client: Client=''):
+
+    if client != '':
+        try:
+            df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                        Client.KLINE_INTERVAL_1MINUTE,
+                                                        '40m UTC'))
+        except BinanceAPIException as error:
+            print(error)
+            time.sleep(60)
+            df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                        Client.KLINE_INTERVAL_1MINUTE,
+                                                        '40m UTC'))
+        df = df.iloc[:,:6]
+        df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+        df.set_index('Time', inplace=True)
+        df.index = pd.to_datetime(df.index, unit='ms')
+        df = df.astype(float)
+
+        return df
+    
+    return None
+
+
+    
 
 if __name__ == '__main__':
     pass
