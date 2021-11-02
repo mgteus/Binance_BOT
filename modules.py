@@ -71,14 +71,14 @@ def get_minutedata(ticker: str = '', client: Client=''):
     if client != '':
         try:
             df = pd.DataFrame(client.get_historical_klines(ticker,
-                                                        Client.KLINE_INTERVAL_1MINUTE,
-                                                        '40m UTC'))
+                                                        Client.KLINE_INTERVAL_5MINUTE,
+                                                        '200m UTC'))
         except BinanceAPIException as error:
             print(error)
             time.sleep(60)
             df = pd.DataFrame(client.get_historical_klines(ticker,
-                                                        Client.KLINE_INTERVAL_1MINUTE,
-                                                        '40m UTC'))
+                                                        Client.KLINE_INTERVAL_5MINUTE,
+                                                        '200m UTC'))
         df = df.iloc[:,:6]
         df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
         df.set_index('Time', inplace=True)
@@ -92,5 +92,4 @@ def get_minutedata(ticker: str = '', client: Client=''):
 
 
 if __name__ == '__main__':
-    x = True and False
-    print(x)
+    df = get_minutedata()

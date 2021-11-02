@@ -11,32 +11,60 @@ from modules import get_secret_and_key, init_client, get_minutedata
 
 def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, client: Client=''):
     """
-    Funcao da estrategia de MACD
+    Funcao da estrategia de MACD e TRIX
     """
-    new_quant, buy_price = 0, 0 
+    new_quant, buy_price, orders = 0, 0, 0
     while True:
         df = get_minutedata(ticker=ticker, client=client)
 
         if not open_position:
-            if ta.trend.macd_diff(df['Close']).iloc[-1] > 0 and ta.trend.macd_diff(df['Close']).iloc[-2] < 0:
-                new_quant = float(str(15/df['Close'].iloc[-1])[:10])
-                ordem = client.create_order(ticker, 'BUY', 'MARKET', new_quant)
+            macd_line = ta.trend.macd_diff(df['Close'])
+            macd_line = macd_line.iloc[-1] > 0 and macd_line.iloc[-2] < 0
+            MACD = macd_line
+
+            trix = ta.trend.trix(df['Close'], window=7).iloc[-1]  
+            TRIX = trix < 0
+
+            if TRIX and MACD:
+                
+                new_quant = math.floor(float(str(15/df['Close'].iloc[-1])[:10]))
+                ordem = client.create_order(symbol=ticker, 
+                                            side='BUY', 
+                                            type='MARKET', 
+                                            quantity = new_quant)
                 print(f"COMPRA = {ordem}")
                 buy_price = float(ordem['fills'][0]['price'])
                 open_position = True
+
+                print(f'COMPREI {new_quant} {ticker}')
                 
-                break
 
         if open_position:
 
             while True:
                 df = get_minutedata(ticker=ticker, client=client)
-                if ta.trend.macd_diff(df['Close']).iloc[-1] < 0 and ta.trend.macd_diff(df['Close']).iloc[-2] > 0:
-                    ordem = client.create_order(ticker, 'SELL', 'MARKET', new_quant)
+
+
+                macd_line = ta.trend.macd_diff(df['Close'])
+                MACD = macd_line.iloc[-1] < 0 and macd_line.iloc[-2] > 0
+                
+                trix = ta.trend.trix(df['Close']).iloc[-1]   
+                TRIX = trix > 0
+
+
+                if MACD and TRIX:
+
+                    ordem = client.create_order(symbol =ticker,
+                                                side = 'SELL', 
+                                                type = 'MARKET', 
+                                                quantity = new_quant)
                     sell_price = float(ordem['fills'][0]['price'])
-                    print(f"VENDA = {ordem}")
-                    print(f"ganhos = {(sell_price-buy_price)}")
+
+                    print(f"ganhos = {(sell_price-buy_price)*new_quant}")
                     print(f"profit = {(sell_price-buy_price)/buy_price}")
+                    print(f'VENDI {new_quant} {ticker}')
+                    open_position = False
+
                     break
 
 
