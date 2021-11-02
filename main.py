@@ -16,6 +16,7 @@ def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, clie
     new_quant, buy_price = 0, 0 
     while True:
         df = get_minutedata(ticker=ticker, client=client)
+
         if not open_position:
             if ta.trend.macd_diff(df['Close']).iloc[-1] > 0 and ta.trend.macd_diff(df['Close']).iloc[-2] < 0:
                 new_quant = float(str(15/df['Close'].iloc[-1])[:10])
@@ -27,6 +28,7 @@ def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, clie
                 break
 
         if open_position:
+
             while True:
                 df = get_minutedata(ticker=ticker, client=client)
                 if ta.trend.macd_diff(df['Close']).iloc[-1] < 0 and ta.trend.macd_diff(df['Close']).iloc[-2] > 0:
@@ -46,5 +48,5 @@ if __name__ == '__main__':
     x, y = get_secret_and_key(path_api)
     client = init_client(x, y)
     df = get_minutedata('BTCBUSD', client)
-    print(ta.trend.macd_diff(df['Close']))
+    print(df)
     #MACD_strat(ticker='', quant=0, client=client)

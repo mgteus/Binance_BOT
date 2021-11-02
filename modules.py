@@ -3,6 +3,7 @@ from binance import Client
 from binance.exceptions import BinanceAPIException
 import pandas as pd
 import time
+import math
 
 
 
@@ -39,6 +40,32 @@ def init_client(key: str = '', secret: str = '', balance: bool = False) -> bool:
     return client
 
 
+def add_log(path: str = '', order_buy: dict = {}, order_sell: dict = {}) -> None:
+    """ 
+    Funcao que adiciona o resultado de uma ordem de compra e a ordem de venda ao arquivo no path
+    """
+    
+    #if order_buy != {} and order_sell != {}:
+    ticker     = 4#float(order_buy['symbol'])
+    price_buy  = 3#float(order_buy['fills'][0]['price'])
+    buy_tax    = 1#float(order_buy['fills'][0]['price'])*.99
+    price_sell = 2#float(order_sell['fills'][0]['price'])
+    sell_tax   = 4#float(order_sell['fills'][0]['price'])*.99
+    percent    = 4#((price_sell-sell_tax) - (price_buy+buy_tax))/price_buy
+    profit_usd = round(price_sell - price_buy - buy_tax - sell_tax, 2)
+
+    log_dict = {'TICKER': [ticker],
+                'P-COMPRA': [price_buy],
+                'TAXA-CMP': [buy_tax],
+                'P-VENDA': [price_sell],
+                'TAXA-VND': [sell_tax],
+                'PROFIT': [percent],
+                'GAIN (USD)' : [profit_usd]}
+
+    df = pd.DataFrame.from_dict(log_dict)
+    print(df)
+
+
 def get_minutedata(ticker: str = '', client: Client=''):
 
     if client != '':
@@ -63,7 +90,7 @@ def get_minutedata(ticker: str = '', client: Client=''):
     return None
 
 
-    
 
 if __name__ == '__main__':
-    pass
+    x = True and False
+    print(x)
