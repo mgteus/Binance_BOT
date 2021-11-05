@@ -4,6 +4,8 @@ import pandas as pd
 import ta as ta
 import os
 import math
+import ccxt
+b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
 from modules import get_secret_and_key, init_client, get_minutedata
 
@@ -68,7 +70,7 @@ def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, clie
                     break
 
 
-            
+        
 
 
 if __name__ == '__main__':

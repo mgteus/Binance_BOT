@@ -9,30 +9,41 @@ import math
 
 import matplotlib.pyplot as plt
 
-for x in [5]: 
-    data = yf.download(tickers='LTC-USD', 
-                    period = f'{7*x}d',
+for x in [5,15]: 
+    ticker = 'BTC-USD' 
+    data = yf.download(tickers=ticker, 
+                    period = f'{4*x}d',
                     interval = f"{x}m",
                     threads = True)
     data.reset_index(drop=False, inplace=True)
+    
 
-    # grafico de analise dos indicadores 
+    #grafico de analise dos indicadores 
     # plt.figure()
     # plt.subplot(211)
+    # plt.title(f"{ticker}")
     # plt.plot(data['Close'])
+    # plt.plot()
 
     # plt.subplot(212)
-    # plt.plot(ta.volume.force_index(data['Close'], data['Volume']))
+    # plt.title('MACD_DIFF')
+    # plt.plot(ta.trend.macd_diff(data['Close']))
     # plt.show()
 
     order_position = False
     ordem = 1
     ganhos = []
+    lista_compras = {'DATA':[], 'CLOSE':[]}
+    lista_vendas = {'DATA':[], 'CLOSE':[]}
+    trix_on = True
     for i in range(data.shape[0]):
 
         if not order_position:
+            
             df = data.iloc[0+i:80+i]
+            
             df.reset_index(drop=True, inplace=True)
+
             #print(f"----------{i}----------------------")
             #print(f"-1 = {ta.trend.macd_diff(df['Close']).iloc[-1]}", ta.trend.macd_diff(df['Close']).iloc[-1] > 0)
             #print(f"-2 = {ta.trend.macd_diff(df['Close']).iloc[-2]}", ta.trend.macd_diff(df['Close']).iloc[-2] < 0)
@@ -45,7 +56,6 @@ for x in [5]:
             macd_line = ta.trend.macd_diff(df['Close'])
             macd_line = macd_line.iloc[-1] > 0 and macd_line.iloc[-2] < 0
             MACD = macd_line
-
 
 
             # aroon_up = ta.trend.aroon_up(df['Close']).iloc[-1]
@@ -62,15 +72,23 @@ for x in [5]:
 
             # FORCE_INDEX = fi
 
+            trix = ta.trend.trix(df['Close'], window=8).iloc[-1]  
+            TRIX = trix > 0
 
+            if not TRIX:
+                trix_on = True
 
-            trix = ta.trend.trix(df['Close'], window=7).iloc[-1]  
-            TRIX = trix < 0
+            VOL_TEST = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
 
-
+            TRIX = TRIX and trix_on
             # decisao de compra
-            if TRIX and MACD:
-                #print("Comprei")
+            if TRIX and VOL_TEST:
+                
+                #comprei!
+                lista_compras['DATA'].append(df[df.columns[0]].iloc[-1])
+                lista_compras['CLOSE'].append(df['Close'].iloc[-1])
+
+                
                 buy_price = df['Close'].iloc[-1]
                 order_position = True
                 continue
@@ -85,40 +103,81 @@ for x in [5]:
             # aroon_up = ta.trend.aroon_up(df['Close']).iloc[-1]
             # aroon_down = ta.trend.aroon_down(df['Close']).iloc[-1]
             # AROON = aroon_down > aroon_up and aroon_down > 70
+
             macd_line = ta.trend.macd_diff(df['Close'])
             MACD = macd_line.iloc[-1] < 0 and macd_line.iloc[-2] > 0
             
 
-            trix = ta.trend.trix(df['Close']).iloc[-1]  
-            
-            TRIX = trix > 0
+            #TRIX = trix < 0
+            trix = ta.trend.trix(df['Close'], window=8).iloc[-1]
+            TRIX = trix < 0
+
+            lucro = df['Close'].iloc[-1]/buy_price
+
+            LUCRO = lucro > 1.1
+
+            if LUCRO:
+                trix_on = False
+
+            VOL_TEST = df['Close'].iloc[-1] < np.mean(df['Volume'].iloc[-6:-1])
 
             # decisao de saída 
-            if MACD and TRIX:
+            if MACD or LUCRO or TRIX or VOL_TEST:
+                # vendi !
+
+                lista_vendas['DATA'].append(df[df.columns[0]].iloc[-1])
+                lista_vendas['CLOSE'].append(df['Close'].iloc[-1])
+
+
                 sell_price = df['Close'].iloc[-1]
 
                 #print(f"COMPRA E VENDA {ordem} FINALIZADA")
                 ordem += 1
                 #print(f"profit = {(sell_price-buy_price)/buy_price}")
-                ganhos.append((sell_price-buy_price)/buy_price)
+                ganhos.append(((sell_price-buy_price)/buy_price)*100)
                 order_position = False
                     
             else:
-                pass
+                pass 
 
 
     if len(ganhos) > 0:
+        # plt.plot(ganhos, lw=3, label=f"% de ganho")
+        # plt.title(f'Gráfico dos ganhos para intervalos de {x}min')
+        # plt.plot(np.array(ganhos).cumsum(), c='k', ls='--', 
+        #             label=f"SomaCum = {round(np.array(ganhos).cumsum()[-1],3)}%")
+        # plt.legend()
+        # plt.show()
+
+        # plt.hist(ganhos)
+        # plt.vlines(x=np.array(ganhos).mean(), ls='--', lw=2, ymax=0, ymin=202,
+        #                 label=f'{round(np.array(ganhos).mean(), 5)}', colors='k')
+        # plt.title(f"Histograma de {ordem} C|V Realizadas")
+        # plt.legend()
+        # plt.show()
+
+        
+        plt.figure()
+        plt.subplot(211)
+        plt.title(f"{x}m")
+        plt.plot(data[df.columns[0]], data['Close'], lw=2, c= 'k')
+        plt.plot(lista_compras['DATA'], lista_compras['CLOSE'], 'go-', lw=3)
+        plt.plot(lista_vendas['DATA'], lista_vendas['CLOSE'] ,'ro-', lw=3)
+
+
+
+
+
+        """
+        FAZER BOLINHAS DE ENTRADA COM COR DEPENDENDO DO MOTIVO DE ENTRADA
+        FAZER BOLINHAS DE SAIDA COM COR DEPENDENDO DO MOTIVO DE SAIDA TBM
+        """
+        plt.subplot(212)
+        plt.title(f"{x}m")
         plt.plot(ganhos, lw=3, label=f"% de ganho")
-        plt.title(f'Gráfico dos ganhos para intervalos de {x}min')
+        #plt.title(f'Gráfico dos ganhos para intervalos de {x}min')
         plt.plot(np.array(ganhos).cumsum(), c='k', ls='--', 
                     label=f"SomaCum = {round(np.array(ganhos).cumsum()[-1],3)}%")
-        plt.legend()
-        plt.show()
-
-        plt.hist(ganhos)
-        plt.vlines(x=np.array(ganhos).mean(), ls='--', lw=2, ymax=0, ymin=202,
-                        label=f'{round(np.array(ganhos).mean(), 5)}', colors='k')
-        plt.title(f"Histograma de {ordem} C|V Realizadas")
         plt.legend()
         plt.show()
 

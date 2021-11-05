@@ -92,4 +92,24 @@ def get_minutedata(ticker: str = '', client: Client=''):
 
 
 if __name__ == '__main__':
-    df = get_minutedata()
+
+    client = init_client('b1ttKpCMSUrWZkGlwTjzyf5EPm13GzYNs4lyVDizgn0ixxRhhqEXvRHW1REVYwBI',
+                'jUm5R1lugi2h0ujhQJTZVfdUu5VdZnAc1odW4ypsLBL2YCQRsOdkitw4wgpvEGEc')
+    # coins_dict = {'TICKER':[], 'QNT':[]}
+    # coins_dict_for_price = {}
+    # for cur in client.get_account()['balances']:
+    #     if float(cur['free']) > 0:
+    #         coins_dict['TICKER'].append(cur['asset'])
+    #         coins_dict['QNT'].append(cur['free'])
+    #         coins_dict_for_price[cur['asset']]=cur['free']
+    # print(coins_dict)
+    # print(coins_dict_for_price)
+    # for corr in client.get_all_tickers():
+    #     if corr['symbol'].replace('BUSD', '') in coins_dict['TICKER']:
+    #         print(corr)
+    #         print(round(float(coins_dict_for_price[corr['symbol'].replace('BUSD', '')])*float(corr['price']),2))
+        
+
+    # df = get_minutedata('BTCBUSD', client)
+    # print(df)
+    
