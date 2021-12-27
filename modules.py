@@ -4,6 +4,7 @@ from binance.exceptions import BinanceAPIException
 import pandas as pd
 import time
 import math
+import numpy as np
 
 
 
@@ -89,12 +90,43 @@ def get_minutedata(ticker: str = '', client: Client=''):
     
     return None
 
+def get_ticker_infos(ticker: str = '', client: Client='', quant: int=0, val: bool=True):
+    """
+    Funcao que devolve as informacoes importantes sobre o ticker que estamos usando.
+        if val retorna a quantidade correta para o trade;
+        else retorna todas as infos usadas para fazer o calculo da quantidade correta.
+    """
+    infos = client.get_symbol_info(symbol=ticker)['filters'][2]
+    price  = float(client.get_symbol_ticker(symbol=ticker)['price'])
+
+    amount = quant/price
+
+    min = float(infos['minQty'])
+    step = float(infos['stepSize'])
+
+    if val:
+        new_quant = round((amount // step)*step, len(infos['stepSize']))
+        return new_quant
+    else: 
+        return min, step
+
+def get_slope(x, y, L):
+    """
+    Funcao que retorna o slope da serie temporal dos dados
+    """
+    try:
+        m, _ = np.polyfit(x[:L], y[:L], 1)
+        return m
+    except:
+        return 0 
+
 
 
 if __name__ == '__main__':
 
-    client = init_client('b1ttKpCMSUrWZkGlwTjzyf5EPm13GzYNs4lyVDizgn0ixxRhhqEXvRHW1REVYwBI',
-                'jUm5R1lugi2h0ujhQJTZVfdUu5VdZnAc1odW4ypsLBL2YCQRsOdkitw4wgpvEGEc')
+
+    
+    print(get_ticker_infos(client=, ticker='BTCBUSD', quant=9))
     # coins_dict = {'TICKER':[], 'QNT':[]}
     # coins_dict_for_price = {}
     # for cur in client.get_account()['balances']:

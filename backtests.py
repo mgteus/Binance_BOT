@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 
 
-def get_slope(x, y, L):
+def get_slope_back(x, y, L):
     try:
         m, _ = np.polyfit(x[:L], y[:L], 1)
         #plt.plot(x[:L+1],y[:L+1])
@@ -24,15 +24,15 @@ def get_slope(x, y, L):
 
 
 def back():
-    for x in [5, 15]: 
+    for x in [5, 1]: 
         start = '2021-10-08'
         end = '2021-12-06'
-        ticker = 'BNB-USD' 
+        ticker = 'LUNA1-USD' 
         data = yf.download(tickers=ticker, 
-                        period = f'{4*x}d',
+                        period = f'{7}d',
                         interval = f"{x}m",
                         threads = True,
-                        start=start)
+                        )
 
         # data = yf.download(tickers=ticker, 
         #                 interval = f"{x}d",
@@ -116,11 +116,11 @@ def back():
                 y_lr = list(df['Close'].dropna())
                 x_lr = [f for f in range(len(y_lr))]
                 # 8 tempos
-                lr_8 = get_slope(x_lr, y_lr, 8)
+                lr_8 = get_slope_back(x_lr, y_lr, 8)
                 
                 #print(f'lr_8={lr_8}')
                 # 21 tempos
-                lr_21 = get_slope(x_lr, y_lr, 21)
+                lr_21 = get_slope_back(x_lr, y_lr, 21)
                 #print(f"lr_21={lr_21}")
                 # 55 tempos
                 #lr_55 = get_slope(x_lr, y_lr, 55)
@@ -177,10 +177,10 @@ def back():
                 y_lr = list(df['Close'].dropna())
                 x_lr = [f for f in range(len(y_lr))]
                 # 8 tempos
-                lr_8_saida = get_slope(x_lr, y_lr, 8)
+                lr_8_saida = get_slope_back(x_lr, y_lr, 8)
 
                 
-                lr_21_saida = get_slope(x_lr, y_lr, 21)
+                lr_21_saida = get_slope_back(x_lr, y_lr, 21)
                 #print(f"lr_8_saida={lr_8_saida}")
 
 
@@ -231,6 +231,10 @@ def back():
             plt.plot(data[df.columns[0]], data['Close'], lw=2, c= 'k')
             plt.plot(lista_compras['DATA'], lista_compras['CLOSE'], 'go-', lw=3)
             plt.plot(lista_vendas['DATA'], lista_vendas['CLOSE'] ,'ro-', lw=3)
+
+
+
+
 
             """
             TROCAR SIMBOLO DE COMPRA E VENDA NO GRAFICO COM O PLT.SCATTER
