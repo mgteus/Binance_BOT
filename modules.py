@@ -2,13 +2,179 @@ from operator import truth
 from binance import Client
 from binance.exceptions import BinanceAPIException
 import pandas as pd
+import os 
 import time
 import math
 import numpy as np
+import csv
+
+import base64
+import os
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+from base64 import b64encode
 
 
+def encrypt_first_login(api: str='', secret: str='') -> tuple([bytes, bytes]):
+    """ 
+    Funcao que encrypta o primeiro login de um usuario devolvendo sua senha e infos criptografadas
+
+    return new_salt, password_enc, api_enc, secret_enc
+    """
+    salt = os.urandom(8)
+    #print(f"salt_para_guardar={salt}")
+    password = b64encode(salt).decode('ascii')
+
+    #print(f"password.encode('ascii')={password.encode('ascii')}")
+    new_salt = b64encode(password.encode('ascii'))
+    #print(f"new_salt = {new_salt}")
+    
+    #print(f"new_salt_1 = {b64encode(new_salt).decode('ascii')}")
 
 
+    #print(f"guarde isso={b64encode(salt).decode('utf-8')}")
+    #print(f"b64encode(password)={b64encode(password.encode())}")
+    kdf_e2 = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=new_salt,
+    iterations=390000,)
+
+
+    #print(f'password.encode()={password.encode()} | KEY')
+    key = base64.urlsafe_b64encode(kdf_e2.derive(new_salt))
+    #print(f'KEY = {key}')
+    encrypter = Fernet(key)
+
+
+    #print(f"password.encode()={password.encode()} | PASSWORD")
+    password_enc = encrypter.encrypt(new_salt).decode('ascii')
+    api_enc = encrypter.encrypt(api.encode('ascii')).decode('ascii')
+    secret_enc = encrypter.encrypt(secret.encode('ascii')).decode('ascii')
+
+
+    return new_salt.decode('ascii'), password_enc, api_enc, secret_enc
+
+def decrypt(text_en: str='', salt: str=''):
+    """ 
+    Funcao que vai descriptografar as informacoes a partir da password do usuario
+    """
+    salt = salt.encode('ascii')
+
+    kdf_d = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=salt,
+    iterations=390000,)
+
+    key = base64.urlsafe_b64encode(kdf_d.derive(salt))
+    #print(f'KEY_d ={key}')
+    decrypter = Fernet(key)
+
+    password_ = decrypter.decrypt(text_en.encode('ascii'))
+    #login_    = decrypter.decrypt(login_en)
+
+
+    #print(f"password_={password_}")
+    #print(f"login_={login_}")
+    #print(f"password_.decode('ascii')={password_.decode('ascii')}")
+    #print(f"login_.decode('ascii')={login_.decode('ascii')}")
+
+    return password_.decode('ascii')
+
+def encrpyt_string(text: str = '', key: str =''):
+    """
+    Funcao que encrypta informacoes do usuario a partir da key enviada
+    """
+
+    key_ = b64encode(key.encode('ascii'))
+
+    kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=key_,
+    iterations=390000,)
+
+
+    #print(f'password.encode()={password.encode()} | KEY')
+    key = base64.urlsafe_b64encode(kdf.derive(key_))
+    #print(f'KEY = {key}')
+    encrypter = Fernet(key)
+
+    return encrypter.encrypt(text.encode('ascii'))
+
+def get_users_data():
+    """
+    Funcao que vai ler o csv de infos dos usuarios e o devolve como dataframe
+    """
+    df = pd.read_csv('users_data.csv')
+
+
+    return df
+
+def add_user(user: str='', password: str= '', api_key:str='', secret: str=''):
+    """
+    Funcao que adiciona um novo usuario ao csv 
+    """
+    df = get_users_data()
+    my_dict = {'USER': user,
+               'PASSWORD': password,
+               'API_KEY': api_key,
+               'SECRET': secret}
+    new_user_df = pd.DataFrame(data=my_dict, columns=my_dict.keys(), index=[0])
+    
+    df = df.append(new_user_df, ignore_index=True)
+
+    df.to_csv('users_data.csv', index=False)
+
+    return 
+
+def check_valid_user(new_user:str=''):
+    """
+    Funcao que retorna se eh possivel criar novo usuario com login escolhido.
+    Nao podemos ter dois usuarios com o mesmo user
+    """ 
+    if len(new_user) < 15 and not new_user.isnumeric() and not new_user[0].isnumeric():
+        df = get_users_data()
+
+        users_list = list(df['USER'])
+
+        if new_user in users_list:
+            # ja existe usuario com esse login
+            return False
+        else:
+            # novo usuario liberado 
+            return True
+    else:
+        return False
+
+def check_users_login(user: str='', password: str=''):
+    """
+    Funcao que faz o login do usuario recebido
+    """
+
+    df = get_users_data()
+    df_user = df.loc[df['USER']==user].copy()
+
+    if df_user.shape[0] == 0:
+        return False, 1, 1
+
+    else:
+
+        password_enc = df_user['PASSWORD'].item()
+        api_key_enc  = df_user['API_KEY'].item()
+        secret_enc   = df_user['SECRET'].item()
+
+        try: 
+            decrypt(text_en=password_enc, salt=password)
+            #print('Senha aceita')
+            return True, decrypt(api_key_enc, password), decrypt(secret_enc, password)
+        
+        except:
+            #print('Senha Invalida')
+            return False, None, None
 
 def get_secret_and_key(path: str='') -> str and str:
     """
@@ -40,7 +206,6 @@ def init_client(key: str = '', secret: str = '', balance: bool = False) -> bool:
 
     return client
 
-
 def add_log(path: str = '', order_buy: dict = {}, order_sell: dict = {}) -> None:
     """ 
     Funcao que adiciona o resultado de uma ordem de compra e a ordem de venda ao arquivo no path
@@ -65,7 +230,6 @@ def add_log(path: str = '', order_buy: dict = {}, order_sell: dict = {}) -> None
 
     df = pd.DataFrame.from_dict(log_dict)
     print(df)
-
 
 def get_minutedata(ticker: str = '', client: Client=''):
 
@@ -121,12 +285,69 @@ def get_slope(x, y, L):
         return 0 
 
 
+def crypto_df_binance(client: Client=''):
+    """
+    Funcao que retorna um dataframe com as infos da carteira associada ao client
+
+    return df
+    """
+    balances = client.get_account()['balances']
+    wallet = {'ticker':[], 'qnt': [], 'price':[], 'tot':[]}
+    for coin_dict in balances:
+        if float(coin_dict['free']) > 0:
+            if coin_dict['asset'] == 'BUSD':
+                wallet['ticker'].append(coin_dict['asset'])
+                wallet['qnt'].append(float(coin_dict['free']))
+                wallet['price'].append(1)
+                wallet['tot'].append(round(float(coin_dict['free']),2))
+            else:
+                wallet['ticker'].append(coin_dict['asset'])
+                wallet['qnt'].append(float(coin_dict['free']))
+                ticker = coin_dict['asset'] 
+                price = round(float(client.get_symbol_ticker(symbol=ticker+'BUSD')['price']), 2)
+                wallet['price'].append(price)
+                wallet['tot'].append(round(float(coin_dict['free'])*price, 2))
+    df = pd.DataFrame(wallet)
+    df.columns = ['TICKER', 'QUANTITY', 'PRICE (USD)', 'VALUE (USD)'] 
+    return df
+
 
 if __name__ == '__main__':
 
+    path_api = r'C:\Users\mateu\workspace\api_binance.txt'
+    x, y = get_secret_and_key(path_api)
+    client = init_client(x, y)
 
-    
-    print(get_ticker_infos(client=, ticker='BTCBUSD', quant=9))
+    print(crypto_df_binance(client=client))
+
+
+
+
+    # new_salt, password_enc, api_enc, secret_enc = encrypt_first_login(api='api', secret='secret')
+
+    # print(f"senha={new_salt}")
+
+    # add_user(user='admin1',
+    #         password=password_enc,
+    #         api_key=api_enc,
+    #         secret=secret_enc)
+
+
+    # first = check_users_login(user='admin1', password='123455')
+    # print(f"first = {first}")
+
+    # second = check_users_login(user='admin1', password=new_salt)
+    # print(f"second = {second}")
+    # if new_salt.decode('ascii') == decrypt(text_en=password_enc.decode('ascii'), salt=senha):
+    #     print('Senha aceita')
+    #     print(decrypt(api_enc.decode('ascii'), senha))
+    #     print(decrypt(secret_enc.decode('ascii'), senha))
+    #     print(decrypt(password_enc.decode('ascii'), senha))
+
+
+
+    #check_users_login(user='teste1', password='')
+    #print(get_ticker_infos(ticker='BTCBUSD', quant=9))
     # coins_dict = {'TICKER':[], 'QNT':[]}
     # coins_dict_for_price = {}
     # for cur in client.get_account()['balances']:
