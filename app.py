@@ -4,6 +4,7 @@ import pandas as pd
 from binance import Client
 from binance.exceptions import BinanceAPIException
 import matplotlib.pyplot as plt
+from main import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_minutedata, add_user, get_users_data, check_users_login
 from modules import encrpyt_string, encrypt_first_login, decrypt
 
@@ -19,7 +20,7 @@ def main():
     aba = st.sidebar.selectbox('Menu', menu)
 
     if aba == 'Login':
-        st.subheader('Login Page')
+        st.subheader('Menu')
         
         username = st.sidebar.text_input('User')
         password = st.sidebar.text_input('Password', type='password')
@@ -29,13 +30,14 @@ def main():
         if st.sidebar.checkbox('Login'):
             result, api, secret = check_users_login(username, password)
             if result:
-                st.success(f'Logged In as {username}')
+                st.sidebar.success(f'Logged In as {username}')
                 client = Client(api_key=api, api_secret=secret)
                 task = st.selectbox('Page', ['Binance Info', 'BOT', 'Histórico'])
+                df_balance = crypto_df_binance(client=client)
 
                 if task == 'Binance Info':
                     st.subheader('Informaçoes da Binance')
-                    df_balance = crypto_df_binance(client=client)
+                    
                     st.dataframe(df_balance)
 
                     st.subheader(f"TOTAL: U${round(sum(df_balance['VALUE (USD)']),2)}")
@@ -43,19 +45,25 @@ def main():
 
             
                 elif task == 'BOT':
-                    st.subheader('Menu do BOT')
-
-                    coins_dict = {'TICKER':[], 'QNT':[]}
-                    mostrar_carteira = st.checkbox('Mostrar Carteira:')
-                    if mostrar_carteira:
-                        for cur in client.get_account()['balances']:
-                            if float(cur['free']) > 0:
-                                coins_dict['TICKER'].append(cur['asset'])
-                                coins_dict['QNT'].append(cur['free'])
-
-                                coins_df = pd.DataFrame.from_dict(coins_dict)
-
-                        st.dataframe(coins_df)
+                    st.subheader('Parametros do BOT')
+                    st.subheader('Escolha a sua estrategia:')
+                    if st.checkbox('MACD'):
+                        ticker_macd = st.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
+                        st.warning(f'MACD em {ticker_macd}')
+                    elif st.checkbox('SLOPE+VOL'):
+                        ticker_col, min_range_col, max_range_col, quant_col = st.beta_columns(4)
+                        ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
+                        min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
+                        max_range = max_range_col.selectbox('Range Max', [i for i in range(15,31)], index=6)
+                        quant = quant_col.selectbox('Quantity (USD)', [i for i in range(20,76)], index=10)
+                        st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, range_max = {max_range} e quantity = {quant} ')
+ 
+                        if st.checkbox('Iniciar Trade'):
+                            st.subheader('Selecione o intervalo:')
+                            interval = st.selectbox('Interval', [1, 5])
+                            
+                            slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, open_position=False, client=client, interval=interval)
+                            
 
 
                 elif task == 'Histórico':

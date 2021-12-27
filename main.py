@@ -6,6 +6,7 @@ import ta as ta
 import os
 import math
 import ccxt
+import time
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
 from modules import get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos
@@ -71,13 +72,13 @@ def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, clie
                     break
 
 
-def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False, client: Client=''):
+def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False, client: Client='', interval: int=0):
     """ 
     Funcao de trade com a estrategia de volume e estrategia de slope para 8 e 21 dias
     """     
     new_quant, buy_price, orders = 0, 0, 0
     while True:
-        df = get_minutedata(ticker=ticker, client=client)
+        df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
         if not open_position:
 
@@ -101,12 +102,14 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 open_position = True
                 usd_ = round(new_quant*buy_price,2)
                 print(f"COMPREI {new_quant} {ticker} ({usd_} USD)")
-                
+            print(f"LR => 8 - {lr_8} | 21 - {lr_21}")
+            print(f"VOL_TEST => { df['Volume'].iloc[-1]} > {np.mean(df['Volume'].iloc[-21:-1])}")
+            time.sleep(60)
 
         if open_position:
 
             while True:
-                df = get_minutedata(ticker=ticker, client=client)
+                df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
 
                 y_lr = list(df['Close'].dropna())
@@ -135,7 +138,12 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                     
                     open_position = False
 
+                print(f"LR_SAIDA => 8 - {lr_8_saida} | 21 - {lr_21_saida}")
+                print(f"VOL_TEST_SAIDA => { df['Volume'].iloc[-1]} > {np.mean(df['Volume'].iloc[-21:-1])}")
+                
+                if LR_SAIDA and VOL_TEST_SAIDA:
                     break
+                time.sleep(60)
 
 
 

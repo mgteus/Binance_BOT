@@ -231,27 +231,47 @@ def add_log(path: str = '', order_buy: dict = {}, order_sell: dict = {}) -> None
     df = pd.DataFrame.from_dict(log_dict)
     print(df)
 
-def get_minutedata(ticker: str = '', client: Client=''):
+def get_minutedata(ticker: str = '', client: Client='', interval: int = 0):
 
     if client != '':
-        try:
-            df = pd.DataFrame(client.get_historical_klines(ticker,
-                                                        Client.KLINE_INTERVAL_5MINUTE,
-                                                        '200m UTC'))
-        except BinanceAPIException as error:
-            print(error)
-            time.sleep(60)
-            df = pd.DataFrame(client.get_historical_klines(ticker,
-                                                        Client.KLINE_INTERVAL_5MINUTE,
-                                                        '200m UTC'))
-        df = df.iloc[:,:6]
-        df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
-        df.set_index('Time', inplace=True)
-        df.index = pd.to_datetime(df.index, unit='ms')
-        df = df.astype(float)
+        if interval == 5:
+            try:
+                df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                            Client.KLINE_INTERVAL_5MINUTE,
+                                                            '200m UTC'))
+            except BinanceAPIException as error:
+                print(error)
+                time.sleep(60)
+                df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                            Client.KLINE_INTERVAL_5MINUTE,
+                                                            '200m UTC'))
+            df = df.iloc[:,:6]
+            df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+            df.set_index('Time', inplace=True)
+            df.index = pd.to_datetime(df.index, unit='ms')
+            df = df.astype(float)
 
-        return df
-    
+            return df
+        elif interval == 1:
+            try:
+                df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                            Client.KLINE_INTERVAL_1MINUTE,
+                                                            '200m UTC'))
+            except BinanceAPIException as error:
+                print(error)
+                time.sleep(60)
+                df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                            Client.KLINE_INTERVAL_1MINUTE,
+                                                            '200m UTC'))
+            df = df.iloc[:,:6]
+            df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+            df.set_index('Time', inplace=True)
+            df.index = pd.to_datetime(df.index, unit='ms')
+            df = df.astype(float)
+
+            return df
+        else:
+            return None
     return None
 
 def get_ticker_infos(ticker: str = '', client: Client='', quant: int=0, val: bool=True):
