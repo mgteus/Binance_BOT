@@ -13,6 +13,7 @@ import os
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from sklearn.linear_model import LinearRegression
 
 from base64 import b64encode
 
@@ -232,8 +233,15 @@ def add_log(path: str = '', order_buy: dict = {}, order_sell: dict = {}) -> None
     print(df)
 
 def get_minutedata(ticker: str = '', client: Client='', interval: int = 0):
+    """
+    Funcao que recebe um ticker, client e intervalo (1min, 5min ou 15min) e devolve
+    um dataframe do valor de fechamente desse ticker em funcao do intervalo escolhido
 
-    if client != '':
+
+    return df
+    """
+    
+    if isinstance(client, Client):
         if interval == 5:
             try:
                 df = pd.DataFrame(client.get_historical_klines(ticker,
@@ -252,6 +260,7 @@ def get_minutedata(ticker: str = '', client: Client='', interval: int = 0):
             df = df.astype(float)
 
             return df
+
         elif interval == 1:
             try:
                 df = pd.DataFrame(client.get_historical_klines(ticker,
@@ -270,6 +279,26 @@ def get_minutedata(ticker: str = '', client: Client='', interval: int = 0):
             df = df.astype(float)
 
             return df
+
+        elif interval == 15:
+            try:
+                df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                            Client.KLINE_INTERVAL_15MINUTE,
+                                                            '1 day ago UTC'))
+            except BinanceAPIException as error:
+                print(error)
+                time.sleep(60)
+                df = pd.DataFrame(client.get_historical_klines(ticker,
+                                                            Client.KLINE_INTERVAL_15MINUTE,
+                                                            '1 day ago UTC'))
+            df = df.iloc[:,:6]
+            df.columns = ['Time', 'Open', 'High', 'Low', 'Close', 'Volume']
+            df.set_index('Time', inplace=True)
+            df.index = pd.to_datetime(df.index, unit='ms')
+            df = df.astype(float)
+
+            return df
+
         else:
             return None
     return None
@@ -299,8 +328,11 @@ def get_slope(x, y, L):
     Funcao que retorna o slope da serie temporal dos dados
     """
     try:
-        m, _ = np.polyfit(x[:L], y[:L], 1)
-        return m
+        x=np.array(x).reshape(-1, 1)
+        y=np.array(y).reshape(-1, 1)
+        lr=LinearRegression()
+        lr.fit (x[:L],y[:L])
+        return lr.coef_[0][0]      
     except:
         return 0 
 
@@ -338,7 +370,12 @@ if __name__ == '__main__':
     x, y = get_secret_and_key(path_api)
     client = init_client(x, y)
 
-    print(crypto_df_binance(client=client))
+
+    # print(pd.DataFrame(client.get_historical_klines("BNBBUSD",
+    #                                                         Client.KLINE_INTERVAL_15MINUTE,
+    #                                                         '1 day ago UTC')))
+
+    #print(crypto_df_binance(client=client))
 
 
 

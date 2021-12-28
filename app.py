@@ -4,7 +4,7 @@ import pandas as pd
 from binance import Client
 from binance.exceptions import BinanceAPIException
 import matplotlib.pyplot as plt
-from main import slope_vol_strat
+from main import make_prints, slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_minutedata, add_user, get_users_data, check_users_login
 from modules import encrpyt_string, encrypt_first_login, decrypt
 
@@ -50,8 +50,9 @@ def main():
                     if st.checkbox('MACD'):
                         ticker_macd = st.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
                         st.warning(f'MACD em {ticker_macd}')
+                        
                     elif st.checkbox('SLOPE+VOL'):
-                        ticker_col, min_range_col, max_range_col, quant_col = st.beta_columns(4)
+                        ticker_col, min_range_col, max_range_col, quant_col = st.columns(4)
                         ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
                         min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
                         max_range = max_range_col.selectbox('Range Max', [i for i in range(15,31)], index=6)
@@ -61,7 +62,8 @@ def main():
                         if st.checkbox('Iniciar Trade'):
                             st.subheader('Selecione o intervalo:')
                             interval = st.selectbox('Interval', [1, 5])
-                            
+
+                            #make_prints(interval)
                             slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, open_position=False, client=client, interval=interval)
                             
 

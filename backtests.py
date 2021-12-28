@@ -24,12 +24,12 @@ def get_slope_back(x, y, L):
 
 
 def back():
-    for x in [5, 1]: 
+    for x in [15]: 
         start = '2021-10-08'
         end = '2021-12-06'
-        ticker = 'LUNA1-USD' 
+        ticker = 'MANA-USD' 
         data = yf.download(tickers=ticker, 
-                        period = f'{7}d',
+                        period = f'{20}d',
                         interval = f"{x}m",
                         threads = True,
                         )
@@ -107,6 +107,8 @@ def back():
 
                 VOL_TEST = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
 
+
+                PRICE = df['Close'].iloc[-1] > np.mean(df['Close'].iloc[-21:-1])
                 
                 # teste LR
                 #print(df['Close'])
@@ -130,7 +132,7 @@ def back():
                 LR = lr_21 > 0 and lr_8 > 0 # and lr_8 > 0 
 
                 # decisao de compra
-                if LR and VOL_TEST:
+                if LR and VOL_TEST and PRICE:
                     
                     #comprei!
                     lista_compras['DATA'].append(df[df.columns[0]].iloc[-1])
@@ -158,8 +160,8 @@ def back():
                 
 
                 #TRIX = trix < 0
-                # trix = ta.trend.trix(df['Close'], window=8).iloc[-1]
-                # TRIX = trix < 0
+                trix = ta.trend.trix(df['Close'], window=8).iloc[-1]
+                TRIX = trix < 0
 
                 #lucro = df['Close'].iloc[-1]/buy_price
 
@@ -189,7 +191,7 @@ def back():
 
                 # decisao de saída 
                 LR_SAIDA = lr_8_saida < 0 and lr_21_saida < 0
-                if LR_SAIDA and VOL_TEST_SAIDA:
+                if LR_SAIDA and TRIX:
                     # vendi !
 
                     lista_vendas['DATA'].append(df[df.columns[0]].iloc[-1])
