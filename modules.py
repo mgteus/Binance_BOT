@@ -437,7 +437,6 @@ if __name__ == '__main__':
     x, y = get_secret_and_key(path_api)
     client = init_client(x, y)
 
-    print('The scikit-learn version is {}.'.format(cryptography.__version__))
 
     #show_info_trade_w_streamlit(client=client)
 
