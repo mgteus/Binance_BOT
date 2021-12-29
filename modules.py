@@ -1,21 +1,22 @@
-from operator import truth
-from binance import Client
-from binance.exceptions import BinanceAPIException
 import pandas as pd
 import os 
 import time
-import math
 import numpy as np
-import csv
-
+import streamlit as st
 import base64
 import os
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from sklearn.linear_model import LinearRegression
+import datetime
 
+from binance import Client
 from base64 import b64encode
+from cryptography.fernet import Fernet
+from sklearn.linear_model import LinearRegression
+from cryptography.hazmat.primitives import hashes
+from binance.exceptions import BinanceAPIException
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+
+
+
 
 
 def encrypt_first_login(api: str='', secret: str='') -> tuple([bytes, bytes]):
@@ -240,7 +241,7 @@ def get_minutedata(ticker: str = '', client: Client='', interval: int = 0):
 
     return df
     """
-    
+
     if isinstance(client, Client):
         if interval == 5:
             try:
@@ -336,7 +337,6 @@ def get_slope(x, y, L):
     except:
         return 0 
 
-
 def crypto_df_binance(client: Client=''):
     """
     Funcao que retorna um dataframe com as infos da carteira associada ao client
@@ -363,6 +363,73 @@ def crypto_df_binance(client: Client=''):
     df.columns = ['TICKER', 'QUANTITY', 'PRICE (USD)', 'VALUE (USD)'] 
     return df
 
+def show_info_trade_w_streamlit(open_position: bool=False, status_list: list = [],
+                         indicators_list: list = [], client: Client ='', b_index: int=0):
+    """
+    Funcao que ira criar os _botoes_ no app para monstrar quais indicadores
+    estao em posicao de compra ou venda
+    """
+
+    def check_icon(x):
+        if x:
+            return "✅"
+        else:
+            return "❌"
+
+    server_time = int(client.get_server_time()['serverTime'])/1000
+    if not open_position:  # buscando compra
+        col1, col2 = st.columns([1,3])
+        col1.button('Buscando Compra', key=str(os.urandom(7))+str(b_index))
+        col2.button(datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (BOT)'+ " - " +
+                    datetime.datetime.utcfromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (UTC)', 
+                    key=str(os.urandom(7))+str(b_index))
+
+        cols = st.columns(len(indicators_list))
+        cols_indices = [i for i  in range(len(indicators_list))]
+
+        for status, indicator, col_index in zip(status_list, indicators_list, cols_indices):
+            cols[col_index].button(f"{indicator}: {check_icon(status)}",
+                                     key=str(os.urandom(7))+str(b_index))
+
+    else:
+        col1, col2 = st.columns([1,3])
+        col1.button('Buscando Venda', key=str(os.urandom(7))+str(b_index))
+        col2.button(datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (BOT)' + " - " +
+                    datetime.datetime.utcfromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (UTC)',
+                     key=str(os.urandom(7))+str(b_index))
+
+        cols = st.columns(len(indicators_list))
+        cols_indices = [i for i  in range(len(indicators_list))]
+
+        for status, indicator, col_index in zip(status_list, indicators_list, cols_indices):
+            cols[col_index].button(f"{indicator}: {check_icon(status)}",
+             key=str(os.urandom(7))+str(b_index))
+
+    return
+
+def show_buy_and_sell_w_streamlit(open_position:bool=False, 
+                                    ticker:str='', 
+                                    quant: int=0,
+                                    usd: int=0,):
+    """
+    Funcao que printa as infos de compra ou venda no app
+    """
+    if not open_position:
+        st.markdown(f"COMPRA de {quant} {ticker} ({usd}USD)")
+    else:
+        st.markdown(f"VENDA de {quant} {ticker} ({usd}USD)")
+ 
+    return 
+
+def display_streamlit_text(text: str=''):
+    """
+    Funcao simples que apresenta _text_ no app
+    """
+
+    st.markdown("**"+text+"**")
+
+
+    return
 
 if __name__ == '__main__':
 
@@ -370,13 +437,16 @@ if __name__ == '__main__':
     x, y = get_secret_and_key(path_api)
     client = init_client(x, y)
 
+    print('The scikit-learn version is {}.'.format(cryptography.__version__))
 
-    # print(pd.DataFrame(client.get_historical_klines("BNBBUSD",
-    #                                                         Client.KLINE_INTERVAL_15MINUTE,
-    #                                                         '1 day ago UTC')))
+    #show_info_trade_w_streamlit(client=client)
+
+    #print(pd.DataFrame(client.get_historical_klines("BNBBUSD",
+                                                            #  Client.KLINE_INTERVAL_15MINUTE,
+                                                            #  '1 day ago UTC')))
 
     #print(crypto_df_binance(client=client))
-
+    #print(get_minutedata("BNBBUSD", client, 15))
 
 
 

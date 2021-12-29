@@ -1,12 +1,11 @@
 import streamlit as st
-import sqlite3
-import pandas as pd
-from binance import Client
-from binance.exceptions import BinanceAPIException
 import matplotlib.pyplot as plt
-from main import make_prints, slope_vol_strat
-from modules import check_valid_user, crypto_df_binance, get_minutedata, add_user, get_users_data, check_users_login
-from modules import encrpyt_string, encrypt_first_login, decrypt
+from binance import Client
+
+from main import slope_vol_strat
+from modules import check_valid_user, crypto_df_binance, get_minutedata, add_user, check_users_login
+from modules import encrypt_first_login
+
 
 
 
@@ -50,7 +49,7 @@ def main():
                     if st.checkbox('MACD'):
                         ticker_macd = st.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
                         st.warning(f'MACD em {ticker_macd}')
-                        
+
                     elif st.checkbox('SLOPE+VOL'):
                         ticker_col, min_range_col, max_range_col, quant_col = st.columns(4)
                         ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
@@ -59,11 +58,8 @@ def main():
                         quant = quant_col.selectbox('Quantity (USD)', [i for i in range(20,76)], index=10)
                         st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, range_max = {max_range} e quantity = {quant} ')
  
-                        if st.checkbox('Iniciar Trade'):
-                            st.subheader('Selecione o intervalo:')
-                            interval = st.selectbox('Interval', [1, 5])
-
-                            #make_prints(interval)
+                        if st.checkbox('Iniciar Trade'): 
+                            interval = st.selectbox('Intervalo (min)', [1,5,15], index=2)                         
                             slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, open_position=False, client=client, interval=interval)
                             
 

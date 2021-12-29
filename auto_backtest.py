@@ -1,11 +1,10 @@
 import yfinance as yf
 import numpy as np 
 from binance import Client
-import ta as ta
+
 from binance.exceptions import BinanceAPIException
 import pandas as pd
-import time
-import math
+
 
 import matplotlib.pyplot as plt
 
@@ -34,7 +33,7 @@ def auto_backtesting(weighted_indicator: dict = {},
     # 
     #  
 
-
+    return 
 
 
 
@@ -46,4 +45,4 @@ if __name__ == '__main__':
                 'TRIX':0,
                 'VOLUME':0}
 
-    auto_backtesting(wei_dct)
+   #auto_backtesting(wei_dct)

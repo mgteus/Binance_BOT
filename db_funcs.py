@@ -2,8 +2,8 @@ import sqlite3
 
 #------------------------------------------------------------------------------
 # funcoes para o banco de dados 
-conn = sqlite3.connect('data.db')
-c = conn.cursor()
+#conn = sqlite3.connect('data.db')
+#c = conn.cursor()
 def create_usertable(): 
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
@@ -47,3 +47,7 @@ def view_all_users():
     c.close()
     return data 
 #------------------------------------------------------------------------------
+
+
+if __name__ == '__main__':
+    pass

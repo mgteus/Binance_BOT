@@ -1,5 +1,3 @@
-from binance import Client
-from binance.exceptions import BinanceAPIException
 import pandas as pd 
 import numpy as np
 import ta as ta
@@ -7,12 +5,12 @@ import os
 import math
 import ccxt
 import time
-import streamlit as st
+
+from binance import Client
+from modules import display_streamlit_text, get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos, show_buy_and_sell_w_streamlit
+from modules import show_info_trade_w_streamlit
+
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
-
-from modules import get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos
-
-
 
 def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, client: Client=''):
     """
@@ -78,12 +76,15 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
     Funcao de trade com a estrategia de volume e estrategia de slope para 8 e 21 dias
     """     
     new_quant, buy_price, orders = 0, 0, 0
+    t = 0
     while True:
         df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
         if not open_position:
+            t = t + 1
 
-            st.button('BUSCANDO COMPRA', key='compra')
+
+            
 
             VOL_TEST = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
             
@@ -91,38 +92,21 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
             y_lr = list(df['Close'].dropna())
             x_lr = [f for f in range(len(y_lr))]
+
             lr_8 = get_slope(x_lr, y_lr, 8)
+            LR8 = lr_8 > 0
             lr_21 = get_slope(x_lr, y_lr, 21)
-
-            #display no app
-            col1, col2, col3, col4 = st.columns(4)
-
-            lr8_b = st.empty()
-            lr21_b = st.empty()
-            lrv_b = st.empty()
-            lrp_b = st.empty()
-
-            if VOL_TEST:            
-                lr8_b.col3.button("VOL: ✅", key='vol')
-            else:
-                lr8_b.col3.button("VOL: ❌", key='vol')
+            LR21 = lr_21 > 0         
             
-            if PRICE:
-                col4.button("PRICE: ✅", key='price')
-            else:
-                col4.button("PRICE: ❌", key='price')
-            if lr_8 > 0:
-                col1.button("LR8: ✅", key='lr8')
-            else:
-                col1.button("LR8: ❌",key='lr8')
+            LR =  LR8 and LR21
 
-            if lr_21 > 0:
-                col2.button("LR21: ✅", key='lr21')
-            else:
-                col2.button("LR21: ❌", key='lr21')
-            
-            
-            LR = lr_21 > 0 and lr_8 > 0
+            # indicadores de entrada discretizados
+            indicators = ['VOL_TEST', 'PRICE', 'LR8', 'LR21']
+            # status de cada indicador
+            status = [VOL_TEST, PRICE, LR8, LR21]
+
+            show_info_trade_w_streamlit(open_position, status, indicators, client, t)
+
 
             if LR and VOL_TEST and PRICE:
                 
@@ -132,51 +116,46 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                                                 quantity=new_quant,
                                                 recvWindow=10000)    # 10000 ms = 10s 
 
-                #print(f"COMPRA = {ordem}")
                 buy_price = float(ordem['fills'][0]['price'])
-                open_position = True
+                
                 usd_ = round(new_quant*buy_price,2)
-                st.text(f"COMPREI {new_quant} {ticker} ({usd_} USD)")
-            #print(f"LR => 8 - {lr_8} | 21 - {lr_21}")
-            #print(f"VOL_TEST => { df['Volume'].iloc[-1]} > {np.mean(df['Volume'].iloc[-21:-1])}")
+                orders = orders + 1
+                show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_)
+                open_position = True
             time.sleep(60)
 
         if open_position:
 
-            st.button('BUSCANDO VENDA', key='venda')
-
             while True:
-                df = get_minutedata(ticker=ticker, client=client, interval=interval)
+                t = t + 1
 
+                df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
                 y_lr = list(df['Close'].dropna())
                 x_lr = [f for f in range(len(y_lr))]
-                # 8 tempos
-                lr_8_saida = get_slope(x_lr, y_lr, 8)
 
+                lr_8_saida = get_slope(x_lr, y_lr, 8)
+                LR8_S = lr_8_saida < 0
                 
                 lr_21_saida = get_slope(x_lr, y_lr, 21)
-                #print(f"lr_8_saida={lr_8_saida}")
+                LR21_S = lr_21_saida < 0
 
 
                 trix = ta.trend.trix(df['Close'], window=8).iloc[-1]
                 TRIX = trix < 0
 
-                if TRIX:
-                    st.button("TRIX_SAIDA: ✅", key='trix')
-                else:
-                    st.buuton("TRIX_SAIDA: ❌", key='trix')
 
                 # TESTE VOLUME SAIDA
                 VOL_TEST_SAIDA = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
 
                 # decisao de saída 
-                LR_SAIDA = lr_8_saida < 0 and lr_21_saida < 0
+                LR_SAIDA = LR8_S and LR21_S
 
-                if LR_SAIDA:
-                    st.button("LR_SAIDA: ✅", key='lr_saida')
-                else:
-                    st.buuton("LR_SAIDA: ❌", key='lr_saida')
+
+                indicators_s = ['LR8', 'LR21', 'TRIX']
+                status_s = [LR8_S, LR21_S, TRIX]
+
+                show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
 
                 if LR_SAIDA and TRIX:
                     ordem = client.order_market_sell(symbol=ticker,
@@ -187,23 +166,17 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                     sell_price = float(ordem['fills'][0]['price'])
 
                     usd_venda = round(new_quant*sell_price, 2)
-                    st.text(f'VENDI {new_quant} {ticker} ({usd_venda} USD)')
-                    st.text(f"ganhos = {(sell_price-buy_price)*new_quant}")
-                    st.text(f"profit = {(sell_price-buy_price)/buy_price}")
+                    orders = orders + 1
+                    show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_venda)
+
+                    display_streamlit_text(f"GANHOS = {(sell_price-buy_price)*new_quant}")
+                    display_streamlit_text(f"PROFIT = {(sell_price-buy_price)/buy_price}")
                     
                     open_position = False
 
-                #print(f"LR_SAIDA => 8 - {lr_8_saida} | 21 - {lr_21_saida}")
-                #print(f"VOL_TEST_SAIDA => { df['Volume'].iloc[-1]} > {np.mean(df['Volume'].iloc[-21:-1])}")
-                
                 if LR_SAIDA and VOL_TEST_SAIDA:
                     break
                 time.sleep(60)
-
-def make_prints(j):
-    for i in range(23):
-        st.text(f'AHHHHHHH {j}')
-    return
 
 if __name__ == '__main__':
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'

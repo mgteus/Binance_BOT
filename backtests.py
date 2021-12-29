@@ -1,12 +1,8 @@
 import yfinance as yf
 import numpy as np 
-from binance import Client
 import ta as ta
 from sklearn.linear_model import LinearRegression
-from binance.exceptions import BinanceAPIException
-import pandas as pd
-import time
-import math
+
 
 np.seterr(divide='ignore', invalid='ignore')
 import matplotlib.pyplot as plt
@@ -14,11 +10,15 @@ import matplotlib.pyplot as plt
 
 
 def get_slope_back(x, y, L):
+    """
+    Funcao que retorna o slope da serie temporal dos dados
+    """
     try:
-        m, _ = np.polyfit(x[:L], y[:L], 1)
-        #plt.plot(x[:L+1],y[:L+1])
-        #plt.show()
-        return m
+        x=np.array(x).reshape(-1, 1)
+        y=np.array(y).reshape(-1, 1)
+        lr=LinearRegression()
+        lr.fit (x[:L],y[:L])
+        return lr.coef_[0][0]      
     except:
         return 0 
 
@@ -289,7 +289,5 @@ def LR_test():
     return 
 
 if __name__ == '__main__':
-    #lista_ = [x for x in range(55)]
-    #for j in [8, 21, 55]:
-        #print(lista_[:j], len(lista_[:j]))
+
     back()
