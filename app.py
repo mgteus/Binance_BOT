@@ -4,7 +4,7 @@ from binance import Client
 
 from main import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_minutedata, add_user, check_users_login
-from modules import encrypt_first_login
+from modules import encrypt_first_login, get_max_quant_trade
 
 
 
@@ -55,7 +55,7 @@ def main():
                         ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
                         min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
                         max_range = max_range_col.selectbox('Range Max', [i for i in range(15,31)], index=6)
-                        quant_max_by_ticker = math.floor(max(df_balance.loc[df_balance['TICKER'] == ticker_slope]['VALUE (USD)']))
+                        quant_max_by_ticker = get_max_quant_trade(list(df_balance.loc[df_balance['TICKER'] == ticker_slope]['VALUE (USD)']))
                         quant = quant_col.selectbox('Quantity (USD)', [i for i in range(10,quant_max_by_ticker)], index=0)
                         interval = interval_col.selectbox('Interval (min)', [1,5,15], index=1)
                         st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, \

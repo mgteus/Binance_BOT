@@ -1,11 +1,13 @@
-import pandas as pd
+
 import os 
 import time
+import math
+import base64
+import datetime
+
+import pandas as pd
 import numpy as np
 import streamlit as st
-import base64
-import os
-import datetime
 
 from binance import Client
 from base64 import b64encode
@@ -431,6 +433,14 @@ def display_streamlit_text(text: str=''):
 
     return
 
+def get_max_quant_trade(values: list = []):
+    """
+    Funcao simples que retorna o math.floor do valor maximo de uma lista
+
+    return math.floor(max)
+    """
+
+    return math.floor(max(values))
 if __name__ == '__main__':
 
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
