@@ -77,6 +77,12 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
     """     
     new_quant, buy_price, orders = 0, 0, 0
     t = 0
+    waiting_time = 60         # 60s
+    if interval == 5:
+        waiting_time = 60*2.5
+    elif interval == 15:
+        waiting_time = 60*5
+    
     while True:
         df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
@@ -122,7 +128,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 orders = orders + 1
                 show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_)
                 open_position = True
-            time.sleep(60)
+            time.sleep(waiting_time)
 
         if open_position:
 
@@ -176,7 +182,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
                 if LR_SAIDA and VOL_TEST_SAIDA:
                     break
-                time.sleep(60)
+                time.sleep(waiting_time)
 
 if __name__ == '__main__':
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'

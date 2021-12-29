@@ -60,7 +60,7 @@ def main():
                         interval = interval_col.selectbox('Interval (min)', [1,5,15], index=1)
                         st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, \
                                      range_max = {max_range} e quantity = {quant} no intervalo de {interval}min')
- 
+                    
                         if st.checkbox('Iniciar Trade'):                        
                             slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, open_position=False, client=client, interval=interval)
                             
