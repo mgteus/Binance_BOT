@@ -51,15 +51,17 @@ def main():
                         st.warning(f'MACD em {ticker_macd}')
 
                     elif st.checkbox('SLOPE+VOL'):
-                        ticker_col, min_range_col, max_range_col, quant_col = st.columns(4)
+                        ticker_col, min_range_col, max_range_col, quant_col, interval_col = st.columns(5)
                         ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
                         min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
                         max_range = max_range_col.selectbox('Range Max', [i for i in range(15,31)], index=6)
-                        quant = quant_col.selectbox('Quantity (USD)', [i for i in range(20,76)], index=10)
-                        st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, range_max = {max_range} e quantity = {quant} ')
+                        quant_max_by_ticker = math.floor(max(df_balance.loc[df_balance['TICKER'] == ticker_slope]['VALUE (USD)']))
+                        quant = quant_col.selectbox('Quantity (USD)', [i for i in range(10,quant_max_by_ticker)], index=0)
+                        interval = interval_col.selectbox('Interval (min)', [1,5,15], index=1)
+                        st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, \
+                                     range_max = {max_range} e quantity = {quant} no intervalo de {interval}min')
  
-                        if st.checkbox('Iniciar Trade'): 
-                            interval = st.selectbox('Intervalo (min)', [1,5,15], index=2)                         
+                        if st.checkbox('Iniciar Trade'):                        
                             slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, open_position=False, client=client, interval=interval)
                             
 
