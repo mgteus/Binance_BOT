@@ -441,6 +441,60 @@ def get_max_quant_trade(values: list = []):
     """
 
     return math.floor(max(values))
+
+def add_trade_to_hist(date: str='N/A', entry:int = 0, \
+                    out: int = 0, profit: float = 0., ganhos: float=0. ):
+    """
+    Funcao que vai adicionar informacoes de uma trade completa na variavel de
+    historico da sessao do app atual
+    """
+    if 'trade_hist' not in st.session_state:
+        st.session_state['trade_hist'] = {'DATE': [date,],
+                                          'ENTRADA': [entry,],
+                                          'SAIDA': [out,],
+                                          'PROFIT':[profit,],
+                                          'GANHOS':[ganhos,]}
+    else:
+        st.session_state['trade_hist']['DATE'].append(date)
+        st.session_state['trade_hist']['ENTRADA'].append(date)
+        st.session_state['trade_hist']['SAIDA'].append(date)
+        st.session_state['trade_hist']['PROFIT'].append(date)
+        st.session_state['trade_hist']['GANHOS'].append(date) 
+    
+    return 
+
+def get_time_from_client(client: Client=''):
+    """
+    Funcao simples que retorna uma string do tempo (BOT) atual
+    """
+    server_time = int(client.get_server_time()['serverTime'])/1000
+    date = datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S') 
+    return date
+
+def get_hist_df(hist_dict: dict={}):
+    """
+    Funcao que recebe o dicionario com o historico de trade e devolve um dataframe
+
+
+    return df
+    """
+    cols = ['DATA', 'ENTRADA (USD)', 'SAIDA (USD)', 'PROFIT (%)', 'GANHOS (USD)']
+    df = pd.DataFrame(hist_dict)
+
+    df.columns = cols
+
+    return df
+
+def change_open_position_in_st():
+    """ 
+    Funcao simples que troca o booleano da variavel de open_position dentro do app
+    """
+    if st.session_state['open_positon']:
+        st.session_state['open_position'] = False
+    else:
+        st.session_state['open_position'] = True
+
+    return 
 if __name__ == '__main__':
 
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
@@ -448,6 +502,14 @@ if __name__ == '__main__':
     client = init_client(x, y)
 
 
+
+    hist_dict = {'DATE': ['2021-12-20',],
+                                          'ENTRADA': [23423,],
+                                          'SAIDA': [2523,],
+                                          'PROFIT':[0.3,],
+                                          'GANHOS':[10,]}
+
+    print(get_hist_df(hist_dict=hist_dict))                                     
     #show_info_trade_w_streamlit(client=client)
 
     #print(pd.DataFrame(client.get_historical_klines("BNBBUSD",

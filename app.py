@@ -1,9 +1,10 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 from binance import Client
+from streamlit.elements.selectbox import SelectboxMixin
 
 from main import slope_vol_strat
-from modules import check_valid_user, crypto_df_binance, get_minutedata, add_user, check_users_login
+from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
 from modules import encrypt_first_login, get_max_quant_trade
 
 
@@ -31,7 +32,7 @@ def main():
             if result:
                 st.sidebar.success(f'Logged In as {username}')
                 client = Client(api_key=api, api_secret=secret)
-                task = st.selectbox('Page', ['Binance Info', 'BOT', 'Histórico'])
+                task = st.selectbox('Page', ['Binance Info', 'BOT'])
                 df_balance = crypto_df_binance(client=client)
 
                 if task == 'Binance Info':
@@ -58,33 +59,33 @@ def main():
                         quant_max_by_ticker = get_max_quant_trade(list(df_balance.loc[df_balance['TICKER'] == ticker_slope]['VALUE (USD)']))
                         quant = quant_col.selectbox('Quantity (USD)', [i for i in range(10,quant_max_by_ticker)], index=0)
                         interval = interval_col.selectbox('Interval (min)', [1,5,15], index=1)
+                        
+
                         st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, \
                                      range_max = {max_range} e quantity = {quant} no intervalo de {interval}min')
-                    
+                        if 'open_position' not in st.session_state:
+                            st.session_state['open_position'] = False 
+                        else:
+                            st.session_state['open_position'] = False
+
+
                         if st.checkbox('Iniciar Trade'):                        
-                            slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, open_position=False, client=client, interval=interval)
+                            slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, 
+                                        open_position=st.session_state['open_position'], 
+                                            client=client, interval=interval)
                             
-
-
-                elif task == 'Histórico':
-                    st.subheader('Histórico de Movimentações')
-
-                    ticker = st.selectbox('Ticker', ['BTCBUSD', 'ETHBUSD'])
-
-                    df = get_minutedata(ticker=ticker, client=client)
-
-
-
-                    fig = plt.figure()
-                    ax = fig.add_subplot(1,1,1)
-
-                    plt.title(ticker)
-                    plt.ylabel('Close Price (USD)')
-                    plt.xlabel('Time (UTC)')
-                    ax.plot(df['Close'])
-
-                    st.write(fig)
-
+                st.session_state['trade_hist']= {'DATE': ['2021-12-20',],
+                                          'ENTRADA': [23423,],
+                                          'SAIDA': [2523,],
+                                          'PROFIT':[0.3,],
+                                          'GANHOS':[10,]}
+                show_hist = st.sidebar.checkbox('Histórico de Trades')
+                if show_hist:
+                    if 'trade_hist' not in st.session_state:
+                        st.sidebar.button('Sem histórico de trades')
+                    else:
+                        st.sidebar.dataframe(get_hist_df(st.session_state['trade_hist']))
+                    
 
             else:  # else do login, caso para senha invalida
                 st.error('Impossivel Fazer Login')

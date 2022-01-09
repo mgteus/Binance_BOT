@@ -8,7 +8,7 @@ import time
 
 from binance import Client
 from modules import display_streamlit_text, get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos, show_buy_and_sell_w_streamlit
-from modules import show_info_trade_w_streamlit
+from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st
 
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
@@ -128,6 +128,8 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 orders = orders + 1
                 show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_)
                 open_position = True
+                change_open_position_in_st()
+                
             time.sleep(waiting_time)
 
         if open_position:
@@ -175,13 +177,28 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                     orders = orders + 1
                     show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_venda)
 
-                    display_streamlit_text(f"GANHOS = {(sell_price-buy_price)*new_quant}")
-                    display_streamlit_text(f"PROFIT = {(sell_price-buy_price)/buy_price}")
+
+                    ganhos = (sell_price-buy_price)*new_quant
+                    profit = (sell_price-buy_price)/buy_price
+                    display_streamlit_text(f"GANHOS = {ganhos}")
+                    display_streamlit_text(f"PROFIT = {profit}")
+
+                    data_final_venda = get_time_from_client(client=client)
+
+                    add_trade_to_hist(date=data_final_venda,
+                                        entry=buy_price,
+                                        out=sell_price,
+                                        profit=profit,
+                                        ganhos=ganhos)
+
                     
                     open_position = False
 
+                    change_open_position_in_st()
+
                 if LR_SAIDA and VOL_TEST_SAIDA:
                     break
+                
                 time.sleep(waiting_time)
 
 if __name__ == '__main__':
