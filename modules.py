@@ -485,6 +485,19 @@ def get_hist_df(hist_dict: dict={}):
 
     return df
 
+def set_open_position_in_st(side:bool=False):
+    """
+    Funcao simples que cria a variavel open_position da sessao no app 
+    """
+    if 'open_position' not in st.session_state:
+        if side:
+            st.session_state['open_position'] = True
+        else:
+            st.session_state['open_position'] = False         
+            return 
+    else:
+        return 
+
 def change_open_position_in_st():
     """ 
     Funcao simples que troca o booleano da variavel de open_position dentro do app
@@ -497,19 +510,34 @@ def change_open_position_in_st():
     return 
 if __name__ == '__main__':
 
-    path_api = r'C:\Users\mateu\workspace\api_binance.txt'
-    x, y = get_secret_and_key(path_api)
-    client = init_client(x, y)
+
+    t = 1
+    times ={"1":0,"5":0, "15":0}
+
+    for t in range(181):
+
+        if t%14==0:
+            times['1']+=1
+        if t%30==0:
+            times['5']+=1
+        if t%90==0:
+            times['15']+=1
+        
+
+    print(times) 
+    # path_api = r'C:\Users\mateu\workspace\api_binance.txt'
+    # x, y = get_secret_and_key(path_api)
+    # client = init_client(x, y)
 
 
 
-    hist_dict = {'DATE': ['2021-12-20',],
-                                          'ENTRADA': [23423,],
-                                          'SAIDA': [2523,],
-                                          'PROFIT':[0.3,],
-                                          'GANHOS':[10,]}
+    # hist_dict = {'DATE': ['2021-12-20',],
+    #                                       'ENTRADA': [23423,],
+    #                                       'SAIDA': [2523,],
+    #                                       'PROFIT':[0.3,],
+    #                                       'GANHOS':[10,]}
 
-    print(get_hist_df(hist_dict=hist_dict))                                     
+    # print(get_hist_df(hist_dict=hist_dict))                                     
     #show_info_trade_w_streamlit(client=client)
 
     #print(pd.DataFrame(client.get_historical_klines("BNBBUSD",

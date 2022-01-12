@@ -8,7 +8,7 @@ import time
 
 from binance import Client
 from modules import display_streamlit_text, get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos, show_buy_and_sell_w_streamlit
-from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st
+from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st, set_open_position_in_st
 
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
@@ -77,16 +77,19 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
     """     
     new_quant, buy_price, orders = 0, 0, 0
     t = 0
-    waiting_time = 60         # 60s
+    waiting_time = 14         # 60s
     if interval == 5:
-        waiting_time = 60*2.5
+        waiting_time = 30
     elif interval == 15:
-        waiting_time = 60*5
+        waiting_time = 90
     
     while True:
         df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
         if not open_position:
+            t = 0
+
+            set_open_position_in_st(side=False)
             t = t + 1
 
 
@@ -110,12 +113,14 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
             indicators = ['VOL_TEST', 'PRICE', 'LR8', 'LR21']
             # status de cada indicador
             status = [VOL_TEST, PRICE, LR8, LR21]
+            
 
-            show_info_trade_w_streamlit(open_position, status, indicators, client, t)
+            if t % waiting_time == 0:
+                show_info_trade_w_streamlit(open_position, status, indicators, client, t)
 
 
             if LR and VOL_TEST and PRICE:
-                
+                show_info_trade_w_streamlit(open_position, status, indicators, client, t)
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
                  
                 ordem = client.order_market_buy(symbol=ticker,
@@ -130,11 +135,13 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 open_position = True
                 change_open_position_in_st()
                 
-            time.sleep(waiting_time)
+            time.sleep(5)
+
 
         if open_position:
 
             while True:
+                set_open_position_in_st(side=True)
                 t = t + 1
 
                 df = get_minutedata(ticker=ticker, client=client, interval=interval)
@@ -163,9 +170,11 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 indicators_s = ['LR8', 'LR21', 'TRIX']
                 status_s = [LR8_S, LR21_S, TRIX]
 
-                show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
+                if t % waiting_time == 0:
+                    show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
 
                 if LR_SAIDA and TRIX:
+                    show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
                     ordem = client.order_market_sell(symbol=ticker,
                                                      quantity=new_quant,
                                                      recvWindow=10000)
@@ -199,7 +208,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 if LR_SAIDA and VOL_TEST_SAIDA:
                     break
                 
-                time.sleep(waiting_time)
+                time.sleep(5)
 
 if __name__ == '__main__':
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
