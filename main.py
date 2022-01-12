@@ -82,12 +82,13 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
         waiting_time = 30
     elif interval == 15:
         waiting_time = 90
-    
+    t = 0
     while True:
+        
         df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
         if not open_position:
-            t = 0
+            
 
             set_open_position_in_st(side=False)
             t = t + 1
@@ -139,6 +140,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
 
         if open_position:
+            t = 0
 
             while True:
                 set_open_position_in_st(side=True)
