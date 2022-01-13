@@ -8,7 +8,7 @@ import time
 
 from binance import Client
 from modules import display_streamlit_text, get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos, show_buy_and_sell_w_streamlit
-from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st, set_open_position_in_st
+from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st, set_open_position_in_st, get_min_quant_in_float
 
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
@@ -125,7 +125,8 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 show_info_trade_w_streamlit(open_position, status, indicators, client, t)
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
 
-                min_quant = math.floor(client.get_symbol_info(ticker)['filters'][2]['minQty'])
+                min_quant = get_min_quant_in_float(client.get_symbol_info(ticker)['filters'][2]['minQty'])
+                
                  
                 if new_quant > min_quant:
                     new_quant = min_quant

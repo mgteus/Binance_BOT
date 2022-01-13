@@ -4,6 +4,7 @@ import time
 import math
 import base64
 import datetime
+from unicodedata import numeric
 
 import pandas as pd
 import numpy as np
@@ -542,7 +543,20 @@ def set_infos_to_session_in_st(infos_list:list=[], values_list: list=[]):
             st.session_state[item] = val
     
     return
-  
+
+def get_min_quant_in_float(min_quant: str=''):
+    """
+    Funcao simples que devolve a quantidade minima de trade em float
+    """
+    base_10 = 0 
+    num = ''
+    for digit in min_quant.replace('.', ''):
+        if digit == '0':
+            base_10+=1
+        else:
+            num += digit
+    return int(num)/(10**base_10)
+
     
 if __name__ == '__main__':
 
@@ -565,11 +579,12 @@ if __name__ == '__main__':
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
     x, y = get_secret_and_key(path_api)
 
-    check_valid_api_and_secret(x,y)
+    client = init_client(x,y)
 
-    
+    min_quant = client.get_symbol_info('BNBBUSD')['filters'][2]['minQty']
 
 
+    print(1 + get_min_quant_in_float(min_quant))
 
 
     # hist_dict = {'DATE': ['2021-12-20',],
