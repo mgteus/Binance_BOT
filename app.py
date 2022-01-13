@@ -122,7 +122,7 @@ def main():
 
                 if st.checkbox('Criptografar informacoes e criar usuario'):
                     
-                    if check_valid_api_and_secret():
+                    if not check_valid_api_and_secret():
 
                         users_password, password_enc, api_enc, secret_enc = encrypt_first_login(api_key_from_input, secret_from_input)
                         st.warning(f"Seu password eh: {users_password}")
@@ -134,7 +134,7 @@ def main():
                                     api_key=api_enc,
                                     secret=secret_enc)
                             st.success('Usuario Criado com Sucesso.')
-                            st.success('Faca Login na aba de Login')
+                            st.success('Faça Login na aba de Login')
 
                         except:
                             st.error('Tente Novamente')
