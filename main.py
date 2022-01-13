@@ -91,6 +91,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
             
 
             set_open_position_in_st(side=False)
+            
             t = t + 1
 
 
@@ -123,10 +124,25 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
             if LR and VOL_TEST and PRICE:
                 show_info_trade_w_streamlit(open_position, status, indicators, client, t)
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
+
+                min_quant = client.get_symbol_info(ticker)['filters'][2]['minQty']
                  
-                ordem = client.order_market_buy(symbol=ticker,
-                                                quantity=new_quant,
-                                                recvWindow=10000)    # 10000 ms = 10s 
+                if new_quant > min_quant:
+                    new_quant = min_quant
+
+                recvwindow = 10000
+
+                while True:
+                    try:    
+                        ordem = client.order_market_buy(symbol=ticker,
+                                                    quantity=new_quant,
+                                                    recvWindow=recvwindow)    # 10000 ms = 10s 
+                        break
+                    except:
+                        recvwindow +=1000
+                        if new_quant + min_quant < quant*1.2:
+                            new_quant+=min_quant
+                        
 
                 buy_price = float(ordem['fills'][0]['price'])
                 
@@ -134,6 +150,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 orders = orders + 1
                 show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_)
                 open_position = True
+
                 change_open_position_in_st()
                 
             time.sleep(5)
@@ -177,9 +194,15 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
                 if LR_SAIDA and TRIX:
                     show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
-                    ordem = client.order_market_sell(symbol=ticker,
+                    recvwindow_venda = 10000
+                    while True:
+                        try:
+                            ordem = client.order_market_sell(symbol=ticker,
                                                      quantity=new_quant,
-                                                     recvWindow=10000)
+                                                     recvWindow=recvwindow_venda)
+                            break
+                        except:
+                            recvwindow_venda += 1000
 
 
                     sell_price = float(ordem['fills'][0]['price'])
@@ -207,7 +230,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
                     change_open_position_in_st()
 
-                if LR_SAIDA and VOL_TEST_SAIDA:
+                if LR_SAIDA and TRIX:
                     break
                 
                 time.sleep(5)

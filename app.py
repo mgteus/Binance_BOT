@@ -5,7 +5,7 @@ from streamlit.elements.selectbox import SelectboxMixin
 
 from main import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
-from modules import encrypt_first_login, get_max_quant_trade
+from modules import encrypt_first_login, get_max_quant_trade, set_infos_to_session_in_st
 
 
 
@@ -60,31 +60,33 @@ def main():
                         quant = quant_col.selectbox('Quantity (USD)', [i for i in range(10,quant_max_by_ticker)], index=0)
                         interval = interval_col.selectbox('Interval (min)', [1,5,15], index=1)
                         
-
+                        infos = ['ticker_slope', 'quant_slope', 'interval_slope']
                         st.warning(f'SLOPE+VOL em {ticker_slope} com range_min = {min_range}, \
                                      range_max = {max_range} e quantity = {quant} no intervalo de {interval}min')
-                        if 'open_position' not in st.session_state:
-                            st.session_state['open_position'] = False 
-                        else:
-                            st.session_state['open_position'] = False
 
 
-                        if st.checkbox('Iniciar Trade'):                        
-                            slope_vol_strat(ticker=ticker_slope+'BUSD', quant=quant, 
-                                        open_position=st.session_state['open_position'], 
-                                            client=client, interval=interval)
+                        if st.checkbox('Iniciar Trade'):
+                            set_infos_to_session_in_st(infos, [ticker_slope, quant, interval])
+
+                            slope_vol_strat(ticker=st.session['ticker_slope']+'BUSD', 
+                                            quant=st.session['quant_slope'], 
+                                            open_position=st.session_state['open_position'], 
+                                            client=client, 
+                                            interval=st.session_state['interval_slope'])
                             
-                st.session_state['trade_hist']= {'DATE': ['2021-12-20',],
-                                          'ENTRADA': [23423,],
-                                          'SAIDA': [2523,],
-                                          'PROFIT':[0.3,],
-                                          'GANHOS':[10,]}
+                # st.session_state['trade_hist']= {'DATE': ['2021-12-20',],
+                #                           'ENTRADA': [23423,],
+                #                           'SAIDA': [2523,],
+                #                           'PROFIT':[0.3,],
+                #                           'GANHOS':[10,]}
+                # adicionar mais tarde
                 show_hist = st.sidebar.checkbox('Histórico de Trades')
                 if show_hist:
                     if 'trade_hist' not in st.session_state:
                         st.sidebar.button('Sem histórico de trades')
                     else:
-                        st.sidebar.dataframe(get_hist_df(st.session_state['trade_hist']))
+                        st.sidebar.button('Funcionalidade em produção')
+                        #st.sidebar.dataframe(get_hist_df(st.session_state['trade_hist']))
                     
 
             else:  # else do login, caso para senha invalida

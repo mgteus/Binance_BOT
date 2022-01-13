@@ -508,6 +508,20 @@ def change_open_position_in_st():
         st.session_state['open_position'] = True
 
     return 
+
+def set_infos_to_session_in_st(infos_list:list=[], values_list: list=[]):
+    """
+    Funcao que vai salvar as informaçoes escolhidas para o trade na sessao do app
+    """
+    for item, val in zip(infos_list, values_list):
+        if item not in st.session_state:
+            st.session_state[item] = val
+        else:
+            st.session_state[item] = val
+    
+    return
+  
+    
 if __name__ == '__main__':
 
 
