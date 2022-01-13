@@ -170,7 +170,7 @@ def check_valid_api_and_secret(api:str = '', secret: str=''):
         quantity=1,
         newClientOrderId='123123', 
         recvWindow=10000)
-        
+
         return True
     except Exception as e:
         print(e)
@@ -565,8 +565,9 @@ if __name__ == '__main__':
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
     x, y = get_secret_and_key(path_api)
 
-    check_valid_api_and_secret("bNxko2x6JPhLvOHywkVxfoxzBRTqv0eTfIIrqFkEMD3vFDEYVoPnelZaf35uP97T",
-                             "Bsvo0PTbYjHy3kNBNjgXRyxdmTlh66VLFntCbK2Rz7TabCFAEJOfeeHG27nngE41")
+    check_valid_api_and_secret(x,y)
+
+    
 
 
 
