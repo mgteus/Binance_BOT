@@ -92,7 +92,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
             set_open_position_in_st(side=False)
             
-            t = t + 1
+            
 
 
             
@@ -152,7 +152,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 open_position = True
 
                 change_open_position_in_st()
-                
+            t = t + 1
             time.sleep(5)
 
 
@@ -161,7 +161,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
             while True:
                 set_open_position_in_st(side=True)
-                t = t + 1
+                
 
                 df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
@@ -232,7 +232,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
                 if LR_SAIDA and TRIX:
                     break
-                
+                t = t + 1
                 time.sleep(5)
 
 if __name__ == '__main__':

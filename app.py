@@ -52,6 +52,8 @@ def main():
                         st.warning(f'MACD em {ticker_macd}')
 
                     elif st.checkbox('SLOPE+VOL'):
+                        # definindo variavel inicial para compra
+                        st.session_state['open_position'] = False
                         ticker_col, min_range_col, max_range_col, quant_col, interval_col = st.columns(5)
                         ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
                         min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
@@ -68,8 +70,8 @@ def main():
                         if st.checkbox('Iniciar Trade'):
                             set_infos_to_session_in_st(infos, [ticker_slope, quant, interval])
 
-                            slope_vol_strat(ticker=st.session['ticker_slope']+'BUSD', 
-                                            quant=st.session['quant_slope'], 
+                            slope_vol_strat(ticker=st.session_state['ticker_slope']+'BUSD', 
+                                            quant=st.session_state['quant_slope'], 
                                             open_position=st.session_state['open_position'], 
                                             client=client, 
                                             interval=st.session_state['interval_slope'])
