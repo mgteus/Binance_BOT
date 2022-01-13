@@ -154,6 +154,28 @@ def check_valid_user(new_user:str=''):
     else:
         return False
 
+def check_valid_api_and_secret(api:str = '', secret: str=''):
+    """
+    Funcao simples que testa a api_key e a secret_key do usuario criando um client_test
+
+    Retorna True caso OK
+    """
+    try: 
+        client_test = Client(api_key=api, api_secret=secret)
+
+        client_test.create_test_order(
+        symbol='BNBBTC',
+        side='BUY',
+        type="MARKET",
+        quantity=1,
+        newClientOrderId='123123', 
+        recvWindow=10000)
+        
+        return True
+    except Exception as e:
+        print(e)
+        return False
+
 def check_users_login(user: str='', password: str=''):
     """
     Funcao que faz o login do usuario recebido
@@ -525,23 +547,27 @@ def set_infos_to_session_in_st(infos_list:list=[], values_list: list=[]):
 if __name__ == '__main__':
 
 
-    t = 1
-    times ={"1":0,"5":0, "15":0}
+    # t = 1
+    # times ={"1":0,"5":0, "15":0}
 
-    for t in range(181):
+    # for t in range(181):
 
-        if t%14==0:
-            times['1']+=1
-        if t%30==0:
-            times['5']+=1
-        if t%90==0:
-            times['15']+=1
+    #     if t%14==0:
+    #         times['1']+=1
+    #     if t%30==0:
+    #         times['5']+=1
+    #     if t%90==0:
+    #         times['15']+=1
         
 
-    print(times) 
-    # path_api = r'C:\Users\mateu\workspace\api_binance.txt'
-    # x, y = get_secret_and_key(path_api)
-    # client = init_client(x, y)
+    # print(times) 
+
+    path_api = r'C:\Users\mateu\workspace\api_binance.txt'
+    x, y = get_secret_and_key(path_api)
+
+    check_valid_api_and_secret("bNxko2x6JPhLvOHywkVxfoxzBRTqv0eTfIIrqFkEMD3vFDEYVoPnelZaf35uP97T",
+                             "Bsvo0PTbYjHy3kNBNjgXRyxdmTlh66VLFntCbK2Rz7TabCFAEJOfeeHG27nngE41")
+
 
 
 

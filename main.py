@@ -125,7 +125,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 show_info_trade_w_streamlit(open_position, status, indicators, client, t)
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
 
-                min_quant = client.get_symbol_info(ticker)['filters'][2]['minQty']
+                min_quant = math.floor(client.get_symbol_info(ticker)['filters'][2]['minQty'])
                  
                 if new_quant > min_quant:
                     new_quant = min_quant

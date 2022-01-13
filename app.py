@@ -5,7 +5,7 @@ from streamlit.elements.selectbox import SelectboxMixin
 
 from main import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
-from modules import encrypt_first_login, get_max_quant_trade, set_infos_to_session_in_st
+from modules import encrypt_first_login, get_max_quant_trade, set_infos_to_session_in_st, check_valid_api_and_secret
 
 
 
@@ -55,11 +55,11 @@ def main():
                         # definindo variavel inicial para compra
                         st.session_state['open_position'] = False
                         ticker_col, min_range_col, max_range_col, quant_col, interval_col = st.columns(5)
-                        ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 10]['TICKER'])
+                        ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 15]['TICKER'])
                         min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
                         max_range = max_range_col.selectbox('Range Max', [i for i in range(15,31)], index=6)
                         quant_max_by_ticker = get_max_quant_trade(list(df_balance.loc[df_balance['TICKER'] == ticker_slope]['VALUE (USD)']))
-                        quant = quant_col.selectbox('Quantity (USD)', [i for i in range(10,quant_max_by_ticker)], index=0)
+                        quant = quant_col.selectbox('Quantity (USD)', [i for i in range(15,quant_max_by_ticker)], index=0)
                         interval = interval_col.selectbox('Interval (min)', [1,5,15], index=1)
                         
                         infos = ['ticker_slope', 'quant_slope', 'interval_slope']
@@ -102,6 +102,7 @@ def main():
         st.subheader('Sobre:')
         st.text_area('Sobre', 
         value="WebApp de trade a partir da API da Binance")
+
     elif aba == 'Sign Up':
         st.subheader('Crie seu novo Usuário')
         new_user = st.text_input('Usuário')
@@ -119,7 +120,7 @@ def main():
                 st.subheader('Secret')
                 secret_from_input = st.text_input(' ', key='ss')
 
-                if st.checkbox('Criptografar informacoes e criar usuario'):
+                if st.checkbox('Criptografar informacoes e criar usuario') and check_valid_api_and_secret():
 
                     users_password, password_enc, api_enc, secret_enc = encrypt_first_login(api_key_from_input, secret_from_input)
                     st.warning(f"Seu password eh: {users_password}")
@@ -135,7 +136,9 @@ def main():
 
                     except:
                         st.error('Tente Novamente')
-
+                else:
+                    st.warning('Possível problema com suas credenciais da API')
+                    st.text('Gere novas credenciais no aplicativo da Binance e lembre de liberar o trade/spot')
 
 
             else:
