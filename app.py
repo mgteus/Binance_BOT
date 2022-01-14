@@ -6,6 +6,7 @@ from streamlit.elements.selectbox import SelectboxMixin
 from main import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
 from modules import encrypt_first_login, get_max_quant_trade, set_infos_to_session_in_st, check_valid_api_and_secret
+from modules import get_ticker_infos,get_min_quant_in_float
 
 
 
@@ -32,7 +33,7 @@ def main():
             if result:
                 st.sidebar.success(f'Logged In as {username}')
                 client = Client(api_key=api, api_secret=secret)
-                task = st.selectbox('Page', ['Binance Info', 'BOT'])
+                task = st.selectbox('Page', ['Binance Info', 'BOT', 'BUY-SELL ZONE'])
                 df_balance = crypto_df_binance(client=client)
 
                 if task == 'Binance Info':
@@ -82,6 +83,51 @@ def main():
                 #                           'PROFIT':[0.3,],
                 #                           'GANHOS':[10,]}
                 # adicionar mais tarde
+                elif task == 'BUY-SELL ZONE':
+                    ticker_col2, min_range_col2, max_range_col2, quant_col2, interval_col2 = st.columns(5)
+                    ticker_test = ticker_col2.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 15]['TICKER'])
+                    min_range_test = min_range_col2.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
+                    max_range_test = max_range_col2.selectbox('Range Max', [i for i in range(15,31)], index=6)
+                    quant_max_by_ticker_test = get_max_quant_trade(list(df_balance.loc[df_balance['TICKER'] == ticker_test]['VALUE (USD)']))
+                    quant_test = quant_col2.selectbox('Quantity (USD)', [i for i in range(10,quant_max_by_ticker_test)], index=0)
+                    interval_test = interval_col2.selectbox('Interval (min)', [1,5,15], index=1)
+
+                    infos2 = ['ticker_slope', 'quant_slope', 'interval_slope']
+                    st.warning(f'SLOPE+VOL em {ticker_test} com range_min = {min_range_test}, \
+                                     range_max = {max_range_test} e quantity = {quant_test} no intervalo de {interval_test}min')
+
+                    if st.button('COMPRA'):
+                        new_quant_test = get_ticker_infos(ticker=ticker_test+'BUSD', client=client, quant=quant_test)
+                        min_quant_test = get_min_quant_in_float(client.get_symbol_info(ticker_test+'BUSD')['filters'][2]['minQty'])
+                        new_quant_test = f"{new_quant_test:.8f}"
+                        min_quant_test = f"{min_quant_test:.8f}"
+                        st.button(f'QUANT={new_quant_test}')
+                        st.button(f'QUANT_MIN={min_quant_test}')
+                
+                 
+                        if float(new_quant_test) < float(min_quant_test):
+                            new_quant_test = min_quant_test
+
+                        recvwindow_test = 10000
+
+                        while True:
+                            try:    
+                                st.text(f"TENTANDO COMPRAR {new_quant_test}")
+                                ordem_test = client.order_market_buy(symbol=ticker_test+"BUSD",
+                                                            quantity=new_quant_test,
+                                                            recvWindow=recvwindow_test)    # 10000 ms = 10s 
+                                st.text(ordem_test)
+                                break
+                            except Exception as e:
+                                if recvwindow_test < 20000:
+                                    recvwindow_test+=100
+                                st.error(e)
+                                if float(new_quant_test) + float(min_quant_test) < quant_test*1.2:
+                                    new_quant_test_aux = 100*float(min_quant_test) + float(new_quant_test)
+                                    new_quant_test = f"{new_quant_test_aux:.8f}"
+
+                        st.success('COMPREI E DEU TUDO CERTO')  
+
                 show_hist = st.sidebar.checkbox('Histórico de Trades')
                 if show_hist:
                     if 'trade_hist' not in st.session_state:

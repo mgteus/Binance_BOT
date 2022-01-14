@@ -89,14 +89,8 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
 
         if not open_position:
             
-
             set_open_position_in_st(side=False)
             
-            
-
-
-            
-
             VOL_TEST = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
             
             PRICE = df['Close'].iloc[-1] > np.mean(df['Close'].iloc[-21:-1])
@@ -124,11 +118,13 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
             if LR and VOL_TEST and PRICE:
                 show_info_trade_w_streamlit(open_position, status, indicators, client, t)
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
+                new_quant = f"{new_quant:.8f}"
 
                 min_quant = get_min_quant_in_float(client.get_symbol_info(ticker)['filters'][2]['minQty'])
-                
+                min_quant = f"{min_quant:.8f}"
+
                  
-                if new_quant > min_quant:
+                if float(new_quant) > float(min_quant):
                     new_quant = min_quant
 
                 recvwindow = 10000
@@ -139,10 +135,17 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                                                     quantity=new_quant,
                                                     recvWindow=recvwindow)    # 10000 ms = 10s 
                         break
+                    
                     except:
-                        recvwindow +=1000
-                        if new_quant + min_quant < quant*1.2:
-                            new_quant+=min_quant
+                        if recvwindow < 20000:
+                            recvwindow +=100
+
+                        if float(new_quant) + float(min_quant) < quant*1.2:
+                            new_quant_aux = float(new_quant) + 100*float(min_quant)
+                            new_quant = f"{new_quant_aux:.8f}"
+                        else: # caso para quando tentamos comprar ate 20% a mais 
+                            new_quant_max = f"{get_ticker_infos(ticker=ticker, client=client, quant=quant*1.2):.8f}"
+                            new_quant = new_quant_max
                         
 
                 buy_price = float(ordem['fills'][0]['price'])
