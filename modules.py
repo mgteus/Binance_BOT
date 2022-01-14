@@ -380,8 +380,11 @@ def crypto_df_binance(client: Client=''):
             else:
                 wallet['ticker'].append(coin_dict['asset'])
                 wallet['qnt'].append(float(coin_dict['free']))
-                ticker = coin_dict['asset'] 
-                price = round(float(client.get_symbol_ticker(symbol=ticker+'BUSD')['price']), 2)
+                ticker = coin_dict['asset']
+                try:
+                    price = round(float(client.get_symbol_ticker(symbol=ticker+'BUSD')['price']), 2)
+                except:
+                    price = 0
                 wallet['price'].append(price)
                 wallet['tot'].append(round(float(coin_dict['free'])*price, 2))
     df = pd.DataFrame(wallet)
