@@ -9,6 +9,7 @@ import time
 from binance import Client
 from modules import display_streamlit_text, get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos, show_buy_and_sell_w_streamlit
 from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st, set_open_position_in_st, get_min_quant_in_float
+from modules import display_error_with_st
 
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
@@ -71,13 +72,16 @@ def MACD_strat(ticker: str='', quant: float = 0, open_position: bool=False, clie
                     break
 
 
-def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False, client: Client='', interval: int=0):
+def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
+                     client: Client='', interval: int=0, max_quant: float = 0):
     """ 
     Funcao de trade com a estrategia de volume e estrategia de slope para 8 e 21 dias
     """     
     new_quant, buy_price, orders = 0, 0, 0
     t = 0
-    waiting_time = 14         # 60s
+    waiting_time = 14         
+    tick_nBUSD = ticker.replace("BUSD", "")
+
     if interval == 5:
         waiting_time = 30
     elif interval == 15:
@@ -112,11 +116,11 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
             
 
             if t % waiting_time == 0:
-                show_info_trade_w_streamlit(open_position, status, indicators, client, t)
+                show_info_trade_w_streamlit(open_position, status, indicators, client, t, str(df.index[-1]))
 
-
-            if LR and VOL_TEST and PRICE:
-                show_info_trade_w_streamlit(open_position, status, indicators, client, t)
+            # DECISAO DE ENTRADA
+            if LR and VOL_TEST and PRICE: 
+                show_info_trade_w_streamlit(open_position, status, indicators, client, t, str(df.index[-1]))
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
                 new_quant = f"{new_quant:.8f}"
 
@@ -124,35 +128,45 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 min_quant = f"{min_quant:.8f}"
 
                  
-                if float(new_quant) > float(min_quant):
+                if float(new_quant) < float(min_quant):
                     new_quant = min_quant
 
                 recvwindow = 10000
 
                 while True:
-                    try:    
+                    try:                       
                         ordem = client.order_market_buy(symbol=ticker,
                                                     quantity=new_quant,
                                                     recvWindow=recvwindow)    # 10000 ms = 10s 
                         break
                     
-                    except:
-                        if recvwindow < 20000:
-                            recvwindow +=100
+                    except Exception as e:
+                        display_error_with_st(f'TENTANDO COMPRA DE {new_quant} {tick_nBUSD}')
+                        display_error_with_st(e)
+                        if recvwindow < 20000:   # recvwindow max de 19900, aprox 20s
+                            recvwindow +=100     # 0.1s
 
-                        if float(new_quant) + float(min_quant) < quant*1.2:
+                        if float(new_quant) + float(min_quant) < quant*1.2 and \
+                           float(new_quant) + float(min_quant) < max_quant:
                             new_quant_aux = float(new_quant) + 100*float(min_quant)
                             new_quant = f"{new_quant_aux:.8f}"
-                        else: # caso para quando tentamos comprar ate 20% a mais 
-                            new_quant_max = f"{get_ticker_infos(ticker=ticker, client=client, quant=quant*1.2):.8f}"
-                            new_quant = new_quant_max
+
+                        else: # caso para quando tentamos comprar ate 20% a mais e vamos usar o maximo                           
+                            if float(new_quant) + float(min_quant) > quant*1.2 and \
+                               float(new_quant) + float(min_quant) < max_quant:
+
+                                new_quant_max = f"{get_ticker_infos(ticker=ticker, client=client, quant=quant*1.2):.8f}"
+                                new_quant = new_quant_max
+                            else:
+                                new_quant_max = f"{get_ticker_infos(ticker=ticker, client=client, quant=max_quant):.8f}"
+                                new_quant = new_quant_max
                         
 
                 buy_price = float(ordem['fills'][0]['price'])
                 
-                usd_ = round(new_quant*buy_price,2)
+                usd_ = round(float(new_quant)*buy_price,2)
                 orders = orders + 1
-                show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_)
+                show_buy_and_sell_w_streamlit(open_position, ticker, float(new_quant), usd_)
                 open_position = True
 
                 change_open_position_in_st()
@@ -186,7 +200,7 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 # TESTE VOLUME SAIDA
                 VOL_TEST_SAIDA = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
 
-                # decisao de saída 
+                # TESTE LR_SAIDA 
                 LR_SAIDA = LR8_S and LR21_S
 
 
@@ -194,10 +208,12 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 status_s = [LR8_S, LR21_S, TRIX]
 
                 if t % waiting_time == 0:
-                    show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
+                    show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t, str(df.index[-1]))
 
+
+                # DECISAO DE SAIDA
                 if LR_SAIDA and TRIX:
-                    show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t)
+                    show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t, str(df.index[-1]))
                     recvwindow_venda = 10000
                     while True:
                         try:
@@ -206,20 +222,27 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                                                      recvWindow=recvwindow_venda)
                             break
                         except:
-                            recvwindow_venda += 1000
+                            if recvwindow_venda < 30000: 
+                                recvwindow_venda += 100   # 0.1s
+                            else:
+                                sell_prob = True
+                                display_error_with_st(f"PROBLEMA NA VENDA DE {tick_nBUSD}")
+                                display_streamlit_text(f"Por favor, venda {new_quant} {tick_nBUSD} manualmente...")
+                                break
 
-
+                    if sell_prob:
+                        break
                     sell_price = float(ordem['fills'][0]['price'])
 
-                    usd_venda = round(new_quant*sell_price, 2)
+                    usd_venda = round(float(new_quant)*sell_price, 2)
                     orders = orders + 1
                     show_buy_and_sell_w_streamlit(open_position, ticker, new_quant, usd_venda)
 
 
-                    ganhos = (sell_price-buy_price)*new_quant
+                    ganhos = (sell_price-buy_price)*float(new_quant)
                     profit = (sell_price-buy_price)/buy_price
-                    display_streamlit_text(f"GANHOS = {ganhos}")
-                    display_streamlit_text(f"PROFIT = {profit}")
+                    display_streamlit_text(f"GANHOS = {ganhos:.4f} USD", ganhos > 0)
+                    display_streamlit_text(f"PROFIT = {profit:.4f}%", profit > 0) 
 
                     data_final_venda = get_time_from_client(client=client)
 
@@ -235,6 +258,8 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                     change_open_position_in_st()
 
                 if LR_SAIDA and TRIX:
+                    t = t + 1
+                    time.sleep(5)
                     break
                 t = t + 1
                 time.sleep(5)
@@ -245,3 +270,11 @@ if __name__ == '__main__':
     client = init_client(x, y)
 
     slope_vol_strat(ticker='', quant=0, client=client)
+
+
+    """
+    PRECISAMOS SEPARAR AS ACOES DE COMPRA E VENDA PARA FORA DAS FUNCOES DE 
+    ESTRATEGIAS, DEIXANDO APENAS A DECISAO DE COMPRA E VENDA NESSE ARQUIVO
+    E TODOS OS PROBLEMAS RELACIONADOS A COMPRA/VENDA EM OUTRO ARQUIVO.
+    DESSE JEITO VAI FICAR FACIL FAZER VAAAARIAS ESTRATEGIAS    
+    """

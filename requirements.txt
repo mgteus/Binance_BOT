@@ -6,3 +6,5 @@ ccxt==1.59.95
 scikit-learn==1.0
 cryptography==3.1.1
 yfinance==0.1.64
+simplejson==3.17.6 
+streamlit-aggrid==0.2.2.post4

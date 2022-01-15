@@ -392,7 +392,8 @@ def crypto_df_binance(client: Client=''):
     return df
 
 def show_info_trade_w_streamlit(open_position: bool=False, status_list: list = [],
-                         indicators_list: list = [], client: Client ='', b_index: int=0):
+                         indicators_list: list = [], client: Client ='', b_index: int=0,
+                         last_date:str = ""):
     """
     Funcao que ira criar os _botoes_ no app para monstrar quais indicadores
     estao em posicao de compra ou venda
@@ -404,13 +405,14 @@ def show_info_trade_w_streamlit(open_position: bool=False, status_list: list = [
         else:
             return "❌"
 
-    server_time = int(client.get_server_time()['serverTime'])/1000
+    #server_time = int(client.get_server_time()['serverTime'])/1000
     if not open_position:  # buscando compra
         col1, col2 = st.columns([1,3])
         col1.button('Buscando Compra', key=str(os.urandom(7))+str(b_index))
-        col2.button(datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (BOT)'+ " - " +
-                    datetime.datetime.utcfromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (UTC)', 
-                    key=str(os.urandom(7))+str(b_index))
+        col2.button(last_date + "(UTC)", key=str(os.urandom(7))+str(b_index))
+        # col2.button(datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (BOT)'+ " - " +
+        #             datetime.datetime.utcfromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (UTC)', 
+        #             key=str(os.urandom(7))+str(b_index))
 
         cols = st.columns(len(indicators_list))
         cols_indices = [i for i  in range(len(indicators_list))]
@@ -422,9 +424,10 @@ def show_info_trade_w_streamlit(open_position: bool=False, status_list: list = [
     else:
         col1, col2 = st.columns([1,3])
         col1.button('Buscando Venda', key=str(os.urandom(7))+str(b_index))
-        col2.button(datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (BOT)' + " - " +
-                    datetime.datetime.utcfromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (UTC)',
-                     key=str(os.urandom(7))+str(b_index))
+        col2.button(last_date + "(UTC)", key=str(os.urandom(7))+str(b_index))
+        # col2.button(datetime.datetime.fromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (BOT)' + " - " +
+        #             datetime.datetime.utcfromtimestamp(server_time).strftime('%Y-%m-%d %H:%M:%S')+' (UTC)',
+        #              key=str(os.urandom(7))+str(b_index))
 
         cols = st.columns(len(indicators_list))
         cols_indices = [i for i  in range(len(indicators_list))]
@@ -442,20 +445,24 @@ def show_buy_and_sell_w_streamlit(open_position:bool=False,
     """
     Funcao que printa as infos de compra ou venda no app
     """
+    ticker = ticker.replace('BUSD', '')
     if not open_position:
-        st.markdown(f"COMPRA de {quant} {ticker} ({usd}USD)")
+        st.success(f"COMPRA de {quant} {ticker} ({usd}USD)")
+
     else:
-        st.markdown(f"VENDA de {quant} {ticker} ({usd}USD)")
+        st.success(f"VENDA de {quant} {ticker} ({usd}USD)")
+
  
     return 
 
-def display_streamlit_text(text: str=''):
+def display_streamlit_text(text: str='', nice_trade:bool=True):
     """
     Funcao simples que apresenta _text_ no app
     """
-
-    st.markdown("**"+text+"**")
-
+    if nice_trade: 
+        st.success("**"+text+"**")
+    else:
+        st.error("**"+text+"**")
 
     return
 
@@ -528,7 +535,7 @@ def change_open_position_in_st():
     """ 
     Funcao simples que troca o booleano da variavel de open_position dentro do app
     """
-    if st.session_state['open_positon']:
+    if st.session_state['open_position']:
         st.session_state['open_position'] = False
     else:
         st.session_state['open_position'] = True
@@ -560,7 +567,16 @@ def get_min_quant_in_float(min_quant: str=''):
             num += digit
     return int(num)/(10**base_10)
 
-    
+def display_error_with_st(error_msg: str = ''):
+    """
+    Funcao simples que apresenta o erro no app
+    """
+    st.warning(error_msg)
+
+    return
+
+
+
 if __name__ == '__main__':
 
 
@@ -584,10 +600,10 @@ if __name__ == '__main__':
 
     client = init_client(x,y)
 
-    min_quant = client.get_symbol_info('BNBBUSD')['filters'][2]['minQty']
+    # min_quant = client.get_symbol_info('BNBBUSD')['filters'][2]['minQty']
 
 
-    print(1 + get_min_quant_in_float(min_quant))
+    # print(1 + get_min_quant_in_float(min_quant))
 
 
     # hist_dict = {'DATE': ['2021-12-20',],
@@ -604,10 +620,12 @@ if __name__ == '__main__':
                                                             #  '1 day ago UTC')))
 
     #print(crypto_df_binance(client=client))
-    #print(get_minutedata("BNBBUSD", client, 15))
+    print(str(get_minutedata("BNBBUSD", client, 15).index[-1]))
 
 
+    ganhos = -0.004
 
+    print(ganhos>0)
     # new_salt, password_enc, api_enc, secret_enc = encrypt_first_login(api='api', secret='secret')
 
     # print(f"senha={new_salt}")

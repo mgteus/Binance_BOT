@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from binance import Client
 from streamlit.elements.selectbox import SelectboxMixin
 
-from main import slope_vol_strat
+from trades_strats import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
 from modules import encrypt_first_login, get_max_quant_trade, set_infos_to_session_in_st, check_valid_api_and_secret
 from modules import get_ticker_infos,get_min_quant_in_float
