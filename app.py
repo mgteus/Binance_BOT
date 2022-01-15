@@ -1,7 +1,8 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 from binance import Client
-from streamlit.elements.selectbox import SelectboxMixin
+from st_aggrid import AgGrid
+
 
 from trades_strats import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
@@ -38,8 +39,9 @@ def main():
 
                 if task == 'Binance Info':
                     st.subheader('Informaçoes da Binance')
-                    
-                    st.dataframe(df_balance)
+                    calc_height = df_balance.shape[0]*45
+                    AgGrid(df_balance,fit_columns_on_grid_load=True,
+                                      theme='streamlit')
 
                     st.subheader(f"TOTAL: U${round(sum(df_balance['VALUE (USD)']),2)}")
 

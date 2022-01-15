@@ -9,6 +9,7 @@ from unicodedata import numeric
 import pandas as pd
 import numpy as np
 import streamlit as st
+from st_aggrid import AgGrid
 
 from binance import Client
 from base64 import b64encode

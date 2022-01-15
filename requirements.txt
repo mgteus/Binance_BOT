@@ -8,3 +8,4 @@ cryptography==3.1.1
 yfinance==0.1.64
 simplejson==3.17.6 
 streamlit-aggrid==0.2.2.post4
+websockets==9.1
