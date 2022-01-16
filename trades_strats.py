@@ -9,7 +9,7 @@ import time
 from binance import Client
 from modules import display_streamlit_text, get_secret_and_key, init_client, get_minutedata, get_slope, get_ticker_infos, show_buy_and_sell_w_streamlit
 from modules import show_info_trade_w_streamlit, get_time_from_client, add_trade_to_hist, change_open_position_in_st, set_open_position_in_st, get_min_quant_in_float
-from modules import display_error_with_st
+from modules import display_error_with_st, display_open_position_in_st
 
 b = ccxt.binance({ 'options': { 'adjustForTimeDifference': True }})
 
@@ -86,14 +86,20 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
         waiting_time = 30
     elif interval == 15:
         waiting_time = 90
-    t = 0
+    t_compra = 0
+    t_aviso_compra = 0
+
+    t_venda = 0
+    t_aviso_venda = 0
     while True:
         
         df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
         if not open_position:
-            
+
             set_open_position_in_st(side=False)
+            
+            
             
             VOL_TEST = df['Volume'].iloc[-1] > np.mean(df['Volume'].iloc[-21:-1])
             
@@ -115,11 +121,15 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
             status = [VOL_TEST, PRICE, LR8, LR21]
             
 
-            if t % waiting_time == 0:
+            if t_compra % waiting_time == 0:
                 show_info_trade_w_streamlit(open_position, status, indicators, client, t, str(df.index[-1]))
-
+                t_aviso_compra += 1
+                if t_aviso_compra == 10:
+                    display_error_with_st('AINDA BUSCANDO COMPRA')
+                    t_aviso_compra = 0
+                
             # DECISAO DE ENTRADA
-            if LR and VOL_TEST and PRICE: 
+            if LR and VOL_TEST and PRICE:
                 show_info_trade_w_streamlit(open_position, status, indicators, client, t, str(df.index[-1]))
                 new_quant = get_ticker_infos(ticker=ticker, client=client, quant=quant)
                 new_quant = f"{new_quant:.8f}"
@@ -170,17 +180,15 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 open_position = True
 
                 change_open_position_in_st()
-            t = t + 1
+            t_compra = t_compra + 1
             time.sleep(5)
 
 
         if open_position:
-            t = 0
-
             while True:
                 set_open_position_in_st(side=True)
                 
-
+                
                 df = get_minutedata(ticker=ticker, client=client, interval=interval)
 
                 y_lr = list(df['Close'].dropna())
@@ -207,14 +215,19 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                 indicators_s = ['LR8', 'LR21', 'TRIX']
                 status_s = [LR8_S, LR21_S, TRIX]
 
-                if t % waiting_time == 0:
+                if t_venda % waiting_time == 0:
                     show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t, str(df.index[-1]))
-
+                    t_aviso_venda += 1
+                    if t_aviso_venda == 10:
+                        display_error_with_st('AINDA BUSCANDO VENDA')
+                        t_aviso_venda = 0
 
                 # DECISAO DE SAIDA
                 if LR_SAIDA and TRIX:
                     show_info_trade_w_streamlit(open_position, status_s, indicators_s, client, t, str(df.index[-1]))
                     recvwindow_venda = 10000
+                    sell_prob = False
+
                     while True:
                         try:
                             ordem = client.order_market_sell(symbol=ticker,
@@ -258,10 +271,10 @@ def slope_vol_strat(ticker: str='', quant: float = 0, open_position: bool=False,
                     change_open_position_in_st()
 
                 if LR_SAIDA and TRIX:
-                    t = t + 1
+                    t_venda = t_venda + 1
                     time.sleep(5)
                     break
-                t = t + 1
+                t_venda = t_venda + 1
                 time.sleep(5)
 
 if __name__ == '__main__':
@@ -277,4 +290,8 @@ if __name__ == '__main__':
     ESTRATEGIAS, DEIXANDO APENAS A DECISAO DE COMPRA E VENDA NESSE ARQUIVO
     E TODOS OS PROBLEMAS RELACIONADOS A COMPRA/VENDA EM OUTRO ARQUIVO.
     DESSE JEITO VAI FICAR FACIL FAZER VAAAARIAS ESTRATEGIAS    
+    """
+    """
+    BOT AINDA ESTA PERDENDO A NOCAO DE COMPRA OU VENDA QUANDO ACABAM OS BOTOES 
+    NA ABA, PRECISAMOS AJEITAR ISSO 
     """

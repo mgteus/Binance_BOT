@@ -7,7 +7,7 @@ from st_aggrid import AgGrid
 from trades_strats import slope_vol_strat
 from modules import check_valid_user, crypto_df_binance, get_hist_df, get_minutedata, add_user, check_users_login
 from modules import encrypt_first_login, get_max_quant_trade, set_infos_to_session_in_st, check_valid_api_and_secret
-from modules import get_ticker_infos,get_min_quant_in_float
+from modules import get_ticker_infos,get_min_quant_in_float, get_possible_trade_coins
 
 
 
@@ -58,7 +58,7 @@ def main():
                         # definindo variavel inicial para compra
                         st.session_state['open_position'] = False
                         ticker_col, min_range_col, max_range_col, quant_col, interval_col = st.columns(5)
-                        ticker_slope = ticker_col.selectbox('Ticker', df_balance.loc[df_balance['VALUE (USD)'] > 15]['TICKER'])
+                        ticker_slope = ticker_col.selectbox('Ticker', get_possible_trade_coins(df_balance))
                         min_range = min_range_col.selectbox('Range Min', [i for  i in range(1, 12)], index=7)
                         max_range = max_range_col.selectbox('Range Max', [i for i in range(15,31)], index=6)
                         quant_max_by_ticker = get_max_quant_trade(list(df_balance.loc[df_balance['TICKER'] == ticker_slope]['VALUE (USD)']))
@@ -122,7 +122,7 @@ def main():
                                 break
                             except Exception as e:
                                 if recvwindow_test < 20000:
-                                    recvwindow_test+=100
+                                    recvwindow_test += 100
                                 st.error(e)
                                 if float(new_quant_test) + float(min_quant_test) < quant_test*1.2:
                                     new_quant_test_aux = 100*float(min_quant_test) + float(new_quant_test)

@@ -9,7 +9,7 @@ from unicodedata import numeric
 import pandas as pd
 import numpy as np
 import streamlit as st
-from st_aggrid import AgGrid
+
 
 from binance import Client
 from base64 import b64encode
@@ -576,31 +576,54 @@ def display_error_with_st(error_msg: str = ''):
 
     return
 
+def display_open_position_in_st(): 
+    """
+    Funcao simples pra printar o estado atual do open_position dentro do streamlit
+    """
+    if 'open_position' not in st.session_state:
+        st.error('OPEN POSITION NAO DEFINIDO')
+    else:
+        st.warning(f"open position in streamlit {st.session_state['open_position']}")
+    
+    return
+
+def get_possible_trade_coins(df: pd.DataFrame):
+    """
+    Funcao simples que devolve lista com as moedas possiveis para trade
+    """
+    df = df[df['TICKER'] != 'BUSD']
+
+    return df.loc[df['VALUE (USD)'] > 15]['TICKER']
 
 
 if __name__ == '__main__':
 
 
-    # t = 1
-    # times ={"1":0,"5":0, "15":0}
+    times ={"1":0,"5":0, "15":0}
+    avisos = 0
 
-    # for t in range(181):
+    for t in range(181):
 
-    #     if t%14==0:
-    #         times['1']+=1
-    #     if t%30==0:
-    #         times['5']+=1
-    #     if t%90==0:
-    #         times['15']+=1
+        if t%14==0:
+            times['1']+=1
+        if t%140==0:
+            times['5']+=1
+        # if t%90==0:
+        #     times['15']+=1
+
         
 
-    # print(times) 
+    print(times) 
 
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
     x, y = get_secret_and_key(path_api)
 
     client = init_client(x,y)
+    
 
+    df = crypto_df_binance(client)
+
+    print(list(get_possible_trade_coins(df)))
     # min_quant = client.get_symbol_info('BNBBUSD')['filters'][2]['minQty']
 
 
@@ -621,12 +644,12 @@ if __name__ == '__main__':
                                                             #  '1 day ago UTC')))
 
     #print(crypto_df_binance(client=client))
-    print(str(get_minutedata("BNBBUSD", client, 15).index[-1]))
+    # print(str(get_minutedata("BNBBUSD", client, 15).index[-1]))
 
 
-    ganhos = -0.004
+    # ganhos = -0.004
 
-    print(ganhos>0)
+    # print(ganhos>0)
     # new_salt, password_enc, api_enc, secret_enc = encrypt_first_login(api='api', secret='secret')
 
     # print(f"senha={new_salt}")
