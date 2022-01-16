@@ -33,7 +33,8 @@ def main():
     if aba == 'Página Inicial': 
         st.subheader('Página Inicial')
         st.image(binance_img)
-
+        st.markdown("***Beta Version 1.0***")
+        
     elif aba == 'Login':
         st.subheader('Menu')
         
