@@ -18,8 +18,8 @@ def main():
     Funcao principal do app
     """
     #images
-    binance_icon = Image.open(r'images\binance-logo-icon.png')
-    binance_img = Image.open(r'images\binance-logo-0.png')
+    binance_icon = Image.open(r"images\binance-logo-icon.png")
+    binance_img = Image.open(r"images\binance-logo-0.png")
 
 
     st.set_page_config(page_title='AutoTrading Binance BOT', page_icon=binance_icon)
