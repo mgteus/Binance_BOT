@@ -598,22 +598,23 @@ def get_possible_trade_coins(df: pd.DataFrame):
 
 if __name__ == '__main__':
 
+    import PIL
+    print(PIL.__version__)
+    # times ={"1":0,"5":0, "15":0}
+    # avisos = 0
 
-    times ={"1":0,"5":0, "15":0}
-    avisos = 0
+    # for t in range(181):
 
-    for t in range(181):
-
-        if t%14==0:
-            times['1']+=1
-        if t%140==0:
-            times['5']+=1
-        # if t%90==0:
-        #     times['15']+=1
+    #     if t%14==0:
+    #         times['1']+=1
+    #     if t%140==0:
+    #         times['5']+=1
+    #     # if t%90==0:
+    #     #     times['15']+=1
 
         
 
-    print(times) 
+    # print(times) 
 
     path_api = r'C:\Users\mateu\workspace\api_binance.txt'
     x, y = get_secret_and_key(path_api)

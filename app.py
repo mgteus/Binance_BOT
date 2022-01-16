@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from binance import Client
 from st_aggrid import AgGrid
+from PIL import Image
 
 
 from trades_strats import slope_vol_strat
@@ -16,12 +17,24 @@ def main():
     """
     Funcao principal do app
     """
-    st.title('BOT_Binance')
+    #images
+    binance_icon = Image.open(r'images\binance-logo-icon.png')
+    binance_img = Image.open(r'images\binance-logo-0.png')
+
+
+    st.set_page_config(page_title='AutoTrading Binance BOT', page_icon=binance_icon)
+    st.title('AutoTrading Binance BOT')
+    
+    
     menu = ['Página Inicial', 'Login', 'Sobre', 'Sign Up']
 
     aba = st.sidebar.selectbox('Menu', menu)
 
-    if aba == 'Login':
+    if aba == 'Página Inicial': 
+        st.subheader('Página Inicial')
+        st.image(binance_img)
+
+    elif aba == 'Login':
         st.subheader('Menu')
         
         username = st.sidebar.text_input('User')
@@ -142,9 +155,7 @@ def main():
             else:  # else do login, caso para senha invalida
                 st.error('Impossivel Fazer Login')
 
-    elif aba == 'Página Inicial': 
-        st.subheader('Página Inicial')
-        st.image('https://logodownload.org/wp-content/uploads/2021/03/binance-logo-0.png')
+
 
     elif aba == 'Sobre':
         st.subheader('Sobre:')
